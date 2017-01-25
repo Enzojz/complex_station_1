@@ -8,8 +8,8 @@ local station = require "stationlib"
 local platformSegments = {2, 4, 8, 12, 16, 20, 24}
 local angleList = {0, 15, 30, 45, 60, 75, 90}
 local nbTracksLevelList = {2, 3, 4, 5, 6, 7, 8, 10, 12}
-local offsetX = {0, 1, 2, 4, 6, 8, 10, 12}
-local offsetY = {0, 0.25, 0.5, 0.75, 1}
+local offsetLat = {0, 1, 2, 4, 6, 8, 10, 12}
+local offsetMed = {0, 0.25, 0.5, 0.75, 1}
 
 local newModel = function(m, ...)
     return {
@@ -38,16 +38,16 @@ local function params()
             values = func.map(platformSegments, function(l) return _(tostring(l * station.segmentLength)) end),
             defaultIndex = 2
         },
-        -- {
-        --     key = "offsetX",
-        --     name = _("Lateral Offset"),
-        --     value = func.map(offsetX, tostring),
-        -- },
-        -- {
-        --     key = "offsetY",
-        --     name = _("Medial Offset"),
-        --     value = func.map(offsetY, tostring),
-        -- },
+        {
+            key = "offsetLat",
+            name = _("Lateral Offset"),
+            values = func.map(offsetLat, tostring),
+        },
+        {
+            key = "offsetMed",
+            name = _("Medial Offset"),
+            values = func.map(offsetMed, tostring),
+        },
         {
             key = "trackTypeCatenary",
             name = _("Track Type & Catenary"),
@@ -71,11 +71,13 @@ end
 
 
 local function makeUpdateFn(config)
-    
-    local basicPattern = {config.platformRepeat, config.platformDwlink}
-    local basicPatternR = {config.platformDwlink, config.platformRepeat}
-    local platformPatterns = function(n)
-        return (n > 2) and (func.mapFlatten(func.seq(1, n * 0.5), function(i) return basicPatternR end)) or basicPattern end
+    local function platformPatterns(config)
+        local basicPattern = {config.platformRepeat, config.platformDwlink}
+        local basicPatternR = {config.platformDwlink, config.platformRepeat}
+        
+        return function(n)
+            return (n > 2) and (func.mapFlatten(func.seq(1, n * 0.5), function(i) return basicPatternR end)) or basicPattern end
+    end
     local stationHouse = config.stationHouse
     local staires = config.staires
     
@@ -86,11 +88,14 @@ local function makeUpdateFn(config)
             local trackType = ({"standard.lua", "standard.lua", "high_speed.lua", "high_speed.lua"})[params.trackTypeCatenary + 1]
             local catenary = (params.trackTypeCatenary == 1) or (params.trackTypeCatenary == 2)
             local nSeg = platformSegments[params.length + 1]
-            local length = nSeg * segmentLength
+            local length = nSeg * station.segmentLength
             local nbTracksSf = nbTracksLevelList[params.nbTracksSf + 1]
             local nbTracksUG = nbTracksLevelList[params.nbTracksUG + 1]
             local height = -10
             
+            local offsetX = offsetLat[params.offsetLat + 1] * station.trackWidth
+            local offsetY = offsetMed[params.offsetMed + 1] * length
+
             local levels = {
                 {
                     mz = coor.I(),
@@ -98,39 +103,93 @@ local function makeUpdateFn(config)
                     mdr = coor.I(),
                     nbTracks = nbTracksSf,
                     baseX = 0,
+                    ignoreFst = false,
+                    ignoreLst = false,
                     id = 0
                 },
                 {
                     mz = coor.transZ(height),
                     mr = coor.I(),
-                    mdr = coor.I(),
+                    mdr = coor.mul(coor.transX(offsetX), coor.transY(offsetY)),
                     nbTracks = nbTracksUG,
                     baseX = 0,
+                    ignoreFst = true,
+                    ignoreLst = true,
                     id = 1
-                }
+                },
+            -- {
+            --     mz = coor.I(),
+            --     mr = coor.I(),
+            --     mdr = coor.I(),
+            --     nbTracks = 1,
+            --     baseX = -15,
+            --     id = 2,
+            --     ignoreFst = false,
+            --     ignoreLst = false,
+            -- }
             }
             
-            local platforms = platformPatterns(nSeg)
-            local xOffsets, uOffsets, xuIndex = station.buildCoors(nSeg)(levels, {}, {}, {}, {})
+            local ofGroup = function(offsets, id) return func.filter(offsets, function(xOffset) return xOffset.id == id end) end
             
-            local sfTracks = station.generateTrackGroups(func.filter(xOffsets, function(xOffset) return xOffset.id == 0 end), length)
-            local ugTracks = station.generateTrackGroups(func.filter(xOffsets, function(xOffset) return xOffset.id == 1 end), length)
-            local mockTracks = station.generateTrackGroups(func.filter(uOffsets, function(xOffset) return xOffset.id == 1 end), length)
+            local platformsUG = platformPatterns(config.underground)(nSeg)
+            local platformsSF = platformPatterns(config.surface)(nSeg)
+            local xOffsets, uOffsets, xuIndex = station.buildCoors(nSeg, true)(levels, {}, {}, {}, {})
             
+            local sfTracks = station.generateTrackGroups(ofGroup(xOffsets, 0), length)
+            local ugTracks = station.generateTrackGroups(ofGroup(xOffsets, 1), length)
+            local mockTracks = station.generateTrackGroups(ofGroup(uOffsets, 1), length)
+            
+            -- local tramTrack = coor.applyEdges(coor.flipY(), coor.flipY())(station.generateTrackGroups(ofGroup(xOffsets, 2), length))
+            local function makeTram(snapNodeRule)
+                return function(edges)
+                    return {
+                        type = "STREET",
+                        -- edgeType = "TUNNEL",
+                        -- edgeTypeName = "railroad_old.lua",
+                        params = {
+                            type = "z_tram_track.lua",
+                            tramTrackType = "ELECTRIC"
+                        },
+                        edges = edges,
+                        snapNodes = snapNodeRule(edges),
+                    }
+                end
+            end
+                        
             result.edgeLists = {
-                trackEdge.normal(catenary, trackType, true, station.noSnap)(sfTracks),
-                trackEdge.tunnel(catenary, trackType, station.noSnap)(ugTracks),
-                trackEdge.tunnel(false, "zzz_mock.lua", station.noSnap)(mockTracks)
+                trackEdge.normal(catenary, trackType, true, snapRule)(sfTracks),
+                trackEdge.tunnel(catenary, trackType, snapRule)(ugTracks),
+                -- makeTram(snapRule)(tramTrack),
+                trackEdge.tunnel(false, "zzz_mock.lua", station.noSnap)(mockTracks),
+            
             }
             
-            result.models = station.makePlatforms(uOffsets, platforms)
+            result.models = func.flatten({
+                station.makePlatforms(ofGroup(uOffsets, 0), platformsSF),
+                station.makePlatforms(ofGroup(uOffsets, 1), platformsUG),
+            }
+            )
             result.terminalGroups = station.makeTerminals(xuIndex)
             
+            local totalWidth = station.trackWidth * #(ofGroup(xOffsets, 0)) + station.platformWidth * #(ofGroup(uOffsets, 0))
+
+            local xMin = -0.5 * station.platformWidth
+            local xMax = xMin + totalWidth
+            local yMin = -0.5 * length
+            local yMax = 0.5 * length
+
             result.groundFaces = {}
             result.terrainAlignmentLists = {
                 {
                     type = "EQUAL",
-                    faces = {},
+                    faces = {
+                        {
+                            {xMin, yMin, 0},
+                            {xMax, yMin, 0},
+                            {xMax, yMax, 0},
+                            {xMin, yMax, 0}
+                        }
+                    },
                 },
             
             }

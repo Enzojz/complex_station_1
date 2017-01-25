@@ -56,10 +56,24 @@ local config = {
     soundConfig = {
         soundSet = {name = "station_passenger_old"}
     },
-    platformRepeat = "station/train/passenger/1990/platform_double_repeat.mdl",
-    platformStart = "station/train/passenger/1990/platform_double_start.mdl",
-    platformEnd = "station/train/passenger/1990/platform_double_end.mdl",
-    platformDwlink = "station/train/passenger/multi_level_underground/1990/underground_platform_downstairs.mdl",
+    underground ={
+        platformRepeat = "station/train/passenger/1990/platform_double_repeat.mdl",
+        platformStart = "station/train/passenger/1990/platform_double_start.mdl",
+        platformEnd = "station/train/passenger/1990/platform_double_end.mdl",
+        platformDwlink = "station/train/passenger/multi_level_underground/1990/underground_platform_downstairs.mdl",
+    },
+    surface = {
+        platformRepeat = "station/train/passenger/1990/platform_double_repeat.mdl",
+        platformStart = "station/train/passenger/1990/platform_double_start.mdl",
+        platformEnd = "station/train/passenger/1990/platform_double_end.mdl",
+        platformDwlink = "station/complex/platform_surface_downstairs.mdl",
+    },
+    tram = {
+        platformRepeat = "station/train/passenger/1990/platform_double_repeat.mdl",
+        platformStart = "station/train/passenger/1990/platform_double_start.mdl",
+        platformEnd = "station/train/passenger/1990/platform_double_end.mdl",
+        platformDwlink = "station/complex/platform_surface_tram.mdl",
+    },
     stationHouse = "station/train/passenger/multi_level_underground/1990/underground_house.mdl",
     staires = "station/train/passenger/multi_level_underground/1990/underground_stairs.mdl"
 }
