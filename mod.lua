@@ -1,3 +1,15 @@
+-- local function modelCallback(fileName, data)
+-- 	if data.metadata.cost then
+-- 		data.metadata.cost.price = 0.0
+-- 	end
+
+-- 	if data.metadata.maintenance then
+-- 		data.metadata.maintenance.runningCosts = 0.0
+-- 	end
+
+-- 	return data
+-- end
+
 function data()
     return {
         info = {
@@ -17,5 +29,20 @@ function data()
             },
             tags = {"Train Station", "Underground Station", "Passenger Station", "Station"},
         },
+	-- runFn = function (settings)
+	-- 	addModifier("loadModel", modelCallback)
+	-- 	addModifier("loadStreet", costCallback)
+	-- 	addModifier("loadTrack", costCallback)
+	-- 	addModifier("loadBridge", costCallback)
+	-- 	addModifier("loadTunnel", costCallback)
+	-- 	addModifier("loadRailroadCrossing", costCallback)
+	-- 	addModifier("loadConstruction", constructionCallback)
+
+	-- 	local costs = table.copy(game.config.costs)
+
+	-- 	for k, v in pairs(costs) do
+	-- 		game.config.costs[k] = 0.0
+	-- 	end
+	-- end
     }
 end

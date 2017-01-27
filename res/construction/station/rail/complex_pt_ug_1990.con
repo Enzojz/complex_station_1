@@ -48,6 +48,10 @@ data = rawData
 
 local station = require "complexstation"
 
+local path = "station/train/passenger/1990/"
+local localPath = "station/complex/1990/"
+local ugPath = "station/train/passenger/multi_level_underground/1990/"
+
 local config = {
     availability = {
         yearFrom = 1920
@@ -57,25 +61,34 @@ local config = {
         soundSet = {name = "station_passenger_old"}
     },
     underground ={
-        platformRepeat = "station/train/passenger/1990/platform_double_repeat.mdl",
-        platformStart = "station/train/passenger/1990/platform_double_start.mdl",
-        platformEnd = "station/train/passenger/1990/platform_double_end.mdl",
-        platformDwlink = "station/train/passenger/multi_level_underground/1990/underground_platform_downstairs.mdl",
+        platformRepeat = path.."platform_double_repeat.mdl",
+        platformStart = path.."platform_double_start.mdl",
+        platformEnd = path.."platform_double_end.mdl",
+        platformDwlink = ugPath.."underground_platform_downstairs.mdl",
     },
     surface = {
-        platformRepeat = "station/train/passenger/1990/platform_double_repeat.mdl",
-        platformStart = "station/train/passenger/1990/platform_double_start.mdl",
-        platformEnd = "station/train/passenger/1990/platform_double_end.mdl",
-        platformDwlink = "station/complex/platform_surface_downstairs.mdl",
+        platformRepeat = path.."platform_double_repeat.mdl",
+        platformStart = path.."platform_double_start.mdl",
+        platformEnd = path.."platform_double_end.mdl",
+        platformDwlink = localPath.."platform_surface_downstairs.mdl",
+        platformFstRepeat = localPath.."platform_surface_empty.mdl",
+        house = {
+            localPath.."main_building_size2.mdl",
+            localPath.."main_building_size4.mdl",
+            localPath.."main_building_size5.mdl",
+        }
     },
     tram = {
-        platformRepeat = "station/train/passenger/1990/platform_double_repeat.mdl",
-        platformStart = "station/train/passenger/1990/platform_double_start.mdl",
-        platformEnd = "station/train/passenger/1990/platform_double_end.mdl",
-        platformDwlink = "station/complex/platform_surface_tram.mdl",
+        platformRepeat = path.."platform_double_repeat.mdl",
+        platformStart = path.."platform_double_start.mdl",
+        platformEnd = path.."platform_double_end.mdl",
+        platformDwlink = localPath.."platform_surface_tram.mdl",
     },
-    stationHouse = "station/train/passenger/multi_level_underground/1990/underground_house.mdl",
-    staires = "station/train/passenger/multi_level_underground/1990/underground_stairs.mdl"
+    platformRoofRepeat = path.."platform_double_roof_repeat.mdl",
+    platformRoofStart = path.."platform_double_roof_start.mdl",
+    platformRoofEnd = path.."platform_double_roof_end.mdl",
+    staires = localPath.."platform_stairs.mdl",
+    stairesPlatform = localPath.."platform_single_stairs_second.mdl"
 }
 
 data = station.makeUpdateFn(config)

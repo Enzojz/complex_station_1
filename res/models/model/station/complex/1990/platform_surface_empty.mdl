@@ -1,6 +1,4 @@
 local laneutil = require "laneutil"
-local coor = require "coor"
-local func = require "func"
 
 local laneWidth = 2.4
 local laneX = 1.5
@@ -22,7 +20,7 @@ function data()
                     },
                     children = {
                         {
-                            id = "station/train/passenger/1990/lod_0_perron_double_stairs.msh",
+                            id = "station/train/passenger/1990/lod_0_perron_double_repeat.msh",
                             transf = {
                                 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
                             },
@@ -73,15 +71,6 @@ function data()
 									{{1.5, -3.5, .80}, {0.0, -3.5, .80}, {-1.5, 0.0, .0}, {-1.5, 0.0, .0}, laneWidth},
                                     {{0.0, -3.5, .80}, {-1.5, -3.5, .80}, {-1.5, 0.0, .0}, {-1.5, 0.0, .0}, laneWidth},
                                     
-                                    -- downstairs
-                                    {{0.0, 3.0, .80}, {0.0, 1.5, .80}, {0.0, -1.5, .0}, {0.0, -1.5, .0}, laneWidth},
-                                    {{0.0, 1.5, .80}, {0.0, -10, -5.0}, {0.0, -10.0, .0}, {0.0, -10.0, .0}, laneWidth},
-                                    
-                                    -- to other plattforms
-                                    {{0.0, -10, -5.0}, {5.0, -10, -5.0}, {7.0, 0.0, .0}, {7.0, 0.0, .0}, laneWidth},
-                                    {{5.0, -10, -5.0}, {7.5, -10, -5.0}, {7.0, 0.0, .0}, {7.0, 0.0, .0}, laneWidth},
-                                    {{0.0, -10, -5.0}, {-5.0, -10, -5.0}, {-7.0, 0.0, .0}, {-7.0, 0.0, .0}, laneWidth},
-                                    {{-5.0, -10, -5.0}, {-7.5, -10, -5.0}, {-7.0, 0.0, .0}, {-7.0, 0.0, .0}, laneWidth},
                             })
                         },
                     },

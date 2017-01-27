@@ -4,6 +4,7 @@ local func = require "func"
 local coor = require "coor"
 local trackEdge = require "trackedge"
 local station = require "stationlib"
+local dump = require "datadumper"
 
 local platformSegments = {2, 4, 8, 12, 16, 20, 24}
 local angleList = {0, 15, 30, 45, 60, 75, 90}
@@ -19,6 +20,22 @@ local newModel = function(m, ...)
 end
 
 local snapRule = function(e) return func.filter(func.seq(0, #e - 1), function(e) return e % 4 == 0 or (e - 3) % 4 == 0 end) end
+
+
+local function makeStreet(edges)
+    
+    return
+        {
+            type = "STREET",
+            params =
+            {
+                type = "station_new_small.lua",
+                tramTrackType = "NO"
+            },
+            edges = edges,
+            snapNodes = {1}
+        }
+end
 
 local function params()
     return {
@@ -39,6 +56,12 @@ local function params()
             defaultIndex = 2
         },
         {
+            key = "trackTypeCatenary",
+            name = _("Track Type & Catenary"),
+            values = {_("Normal"), _("Elec."), _("Elec.Hi-Speed"), _("Hi-Speed")},
+            defaultIndex = 1
+        },
+        {
             key = "offsetLat",
             name = _("Lateral Offset"),
             values = func.map(offsetLat, tostring),
@@ -49,21 +72,19 @@ local function params()
             values = func.map(offsetMed, tostring),
         },
         {
-            key = "trackTypeCatenary",
-            name = _("Track Type & Catenary"),
-            values = {_("Normal"), _("Elec."), _("Elec.Hi-Speed"), _("Hi-Speed")},
-            defaultIndex = 1
-        },
-        {
             key = "angle",
             name = _("Cross angle") .. "(°)",
             values = func.map(angleList, tostring)
         },
         {
-            
             key = "mirrored",
             name = _("Mirrored Underground Level"),
             values = {_("No"), _("Yes")}
+        },
+        {
+            key = "strConnection",
+            name = _("Street Connection"),
+            values = {_("1"), _("2"), _("1 Mini"), _("2 Minis")}
         },
     }
 end
@@ -76,8 +97,22 @@ local function makeUpdateFn(config)
         local basicPatternR = {config.platformDwlink, config.platformRepeat}
         
         return function(n)
-            return (n > 2) and (func.mapFlatten(func.seq(1, n * 0.5), function(i) return basicPatternR end)) or basicPattern end
+            local ret = (n > 2) and (func.mapFlatten(func.seq(1, n * 0.5), function(i) return basicPatternR end)) or basicPattern
+            ret[1] = config.platformStart
+            if (n > 2) then ret[#ret] = config.platformEnd end
+            return ret
+        end
     end
+    
+    local roofPatterns = function(n)
+        local roofs = func.seqMap({1, n}, function(_) return config.platformRoofRepeat end)
+        if (n > 2) then
+            roofs[1] = config.platformRoofStart
+            roofs[n] = config.platformRoofEnd
+        end
+        return roofs
+    end
+    
     local stationHouse = config.stationHouse
     local staires = config.staires
     
@@ -91,11 +126,12 @@ local function makeUpdateFn(config)
             local length = nSeg * station.segmentLength
             local nbTracksSf = nbTracksLevelList[params.nbTracksSf + 1]
             local nbTracksUG = nbTracksLevelList[params.nbTracksUG + 1]
-            local height = -10
+            local height = -15
+            local strConn = params.strConnection + 1
             
             local offsetX = offsetLat[params.offsetLat + 1] * station.trackWidth
             local offsetY = offsetMed[params.offsetMed + 1] * length
-
+            
             local levels = {
                 {
                     mz = coor.I(),
@@ -155,44 +191,138 @@ local function makeUpdateFn(config)
                     }
                 end
             end
-                        
+            
+            
+            local xOffsets0 = ofGroup(xOffsets, 0)
+            local uOffsets0 = ofGroup(uOffsets, 0)
+            
+            local house = config.surface.house[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
+            
+            local platformsS, platformsU, roofs =
+                station.makePlatforms(ofGroup(uOffsets, 0), platformsSF),
+                station.makePlatforms(ofGroup(uOffsets, 1), platformsUG),
+                station.makePlatforms(func.range(uOffsets0, 2, #uOffsets0), roofPatterns(nSeg))
+            
+            local makeEntry = function()
+                if (strConn < 3) then
+                    local yHouse = ({15, 25, 30})[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
+                    platformsS[math.ceil(nSeg * 0.5)].id = config.surface.platformFstRepeat
+                    platformsS[math.ceil(nSeg * 0.5 + 1)].id = config.surface.platformFstRepeat
+                    return
+                        {newModel(house, coor.rotZ(math.pi * 1.5), coor.transX(-5.5))},
+                        makeStreet({
+                            {{-5.5 - 10, 0, 0}, {-10, 0, 0}},
+                            {{-5.5 - 30, 0, 0}, {-10, 0, 0}}
+                        }),
+                        {
+                            {0, yHouse, 0},
+                            {-15.5, yHouse, 0},
+                            {-15.5, -yHouse, 0},
+                            {0, -yHouse, 0},
+                        }
+                else
+                    func.forEach(station.makePlatforms({uOffsets[1]}, roofPatterns(nSeg)), func.bind(table.insert, roofs))
+                    return
+                        {newModel(config.staires, coor.transX(0.5 * station.trackWidth), coor.rotZ(math.pi))},
+                        makeStreet({
+                            {{4 - 10, 0, 0}, {-10, 0, 0}},
+                            {{4 - 30, 0, 0}, {-10, 0, 0}}
+                        }),
+                        {
+                            {0, 6, 0},
+                            {-6, 6, 0},
+                            {-6, -6, 0},
+                            {0, -6, 0},
+                        }
+                end
+            end
+            
+            local makeEntry2 = function()
+                if (strConn == 2 or strConn == 4) then
+                    if (xOffsets0[#xOffsets0].x > uOffsets0[#uOffsets0].x) then
+                        local xRef = xOffsets0[#xOffsets0].x
+                        return
+                            {newModel(config.stairesPlatform, coor.transX(xRef + station.trackWidth)),
+                                newModel(config.staires, coor.transX(xRef + 0.5 + station.trackWidth))},
+                            makeStreet({
+                                {{xRef + 9, 0, 0}, {10, 0, 0}},
+                                {{xRef + 29, 0, 0}, {10, 0, 0}}
+                            }),
+                            {
+                                {xRef, -12, 0},
+                                {xRef + 9, -12, 0},
+                                {xRef + 9, 12, 0},
+                                {xRef, 12, 0}
+                            }
+                    else
+                        local xRef = uOffsets0[#uOffsets0].x
+                        return
+                            {newModel(config.staires, coor.transX(xRef + 0.5 * station.trackWidth))},
+                            makeStreet({
+                                {{xRef + 6, 0, 0}, {10, 0, 0}},
+                                {{xRef + 26, 0, 0}, {10, 0, 0}}
+                            })
+                            ,{
+                                {xRef, -6, 0},
+                                {xRef + 6, -6, 0},
+                                {xRef + 6, 6, 0},
+                                {xRef, 6, 0}
+                            }
+                    end
+                else
+                    return {}, nil, nil
+                end
+            end
+            
+            local entry, str, fE = makeEntry()
+            local entry2, str2, fE2 = makeEntry2()
+            
+            result.models = func.flatten({
+                platformsS, platformsU, roofs,
+                entry, entry2
+            }
+            )
             result.edgeLists = {
                 trackEdge.normal(catenary, trackType, true, snapRule)(sfTracks),
                 trackEdge.tunnel(catenary, trackType, snapRule)(ugTracks),
                 -- makeTram(snapRule)(tramTrack),
                 trackEdge.tunnel(false, "zzz_mock.lua", station.noSnap)(mockTracks),
+                str, str2
             
             }
             
-            result.models = func.flatten({
-                station.makePlatforms(ofGroup(uOffsets, 0), platformsSF),
-                station.makePlatforms(ofGroup(uOffsets, 1), platformsUG),
-            }
-            )
             result.terminalGroups = station.makeTerminals(xuIndex)
             
-            local totalWidth = station.trackWidth * #(ofGroup(xOffsets, 0)) + station.platformWidth * #(ofGroup(uOffsets, 0))
-
+            local totalWidth = station.trackWidth * #ofGroup(xOffsets, 0) + station.platformWidth * #ofGroup(uOffsets, 0)
+            
             local xMin = -0.5 * station.platformWidth
             local xMax = xMin + totalWidth
             local yMin = -0.5 * length
             local yMax = 0.5 * length
-
-            result.groundFaces = {}
+            
+            local faces = {
+                {
+                    {xMin, yMin, 0},
+                    {xMax, yMin, 0},
+                    {xMax, yMax, 0},
+                    {xMin, yMax, 0}
+                }, fE, fE2
+            }
+            
             result.terrainAlignmentLists = {
                 {
                     type = "EQUAL",
-                    faces = {
-                        {
-                            {xMin, yMin, 0},
-                            {xMax, yMin, 0},
-                            {xMax, yMax, 0},
-                            {xMin, yMax, 0}
-                        }
-                    },
+                    faces = faces
                 },
-            
             }
+            
+            
+            result.groundFaces =
+                func.mapFlatten(faces, function(f) return {
+                    {face = f, modes = {{type = "FILL", key = "industry_gravel_small_01"}}},
+                    {face = f, modes = {{type = "STROKE_OUTER", key = "building_paving"}}}
+                } end)
+            
             
             -- func.forEach(entryLocations, func.bind(addEntry, result, tramTrack))
             result.cost = 120000 + (nbTracksSf + nbTracksUG) * 24000
