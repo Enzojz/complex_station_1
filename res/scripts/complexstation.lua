@@ -113,6 +113,7 @@ local function makeTram(type, snapNode)
     return function(edges)
         return {
             type = "STREET",
+            alignTerrain = false,
             -- edgeType = "TUNNEL",
             -- edgeTypeName = "street_old.lua",
             params = {
