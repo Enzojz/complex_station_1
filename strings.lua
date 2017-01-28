@@ -13,11 +13,11 @@ Features:
 
 To be implemented:
 * Better-looking tram track
-* Underground tram stop (to be tested)
+* Underground tram stop (there're some techinique bugs)
 * Pass-through layout
 
 === ATTENTION ===
-* This is the test version of the mod, please use it with attention. Backup your important gameplay before application.
+* This is the pre-release version of the mod, please use it with attention. Backup your important gameplay before application.
 * The purpose of this release is mainly collect feedback and check of stability.
 
 ---------------
