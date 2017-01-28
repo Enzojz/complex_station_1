@@ -147,16 +147,13 @@ local tramTrackExtCoor =
 
 local function makeCommonPlatformTram(base, config)
     local tramTrackCoor = laneutil.makeLanes({
-        {{-2.5, 40, 0}, {-2.5, 0, 0}, {0, -1, 0}, {0, -1, 0}},
-        {{-2.5, 0, 0}, {-2.5, -40, 0}, {0, -1, 0}, {0, -1, 0}},
+        {{-2.5, 39.9, 0}, {-2.5, -39.9, 0}, {0, -1, 0}, {0, -1, 0}},
+        {{2.5, -39.9, 0}, {2.5, 39.9, 0}, {0, 1, 0}, {0, 1, 0}},
         
-        {{2.5, -40, 0}, {2.5, 0, 0}, {0, 1, 0}, {0, 1, 0}},
-        {{2.5, 0, 0}, {2.5, 40, 0}, {0, 1, 0}, {0, 1, 0}},
-        
-        {{2.5, -40, 0}, {3.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
-        {{-2.5, -40, 0}, {0.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
-        {{2.5, 40, 0}, {3.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
-        {{-2.5, 40, 0}, {0.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
+        {{2.5, -40.1, 0}, {3.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
+        {{-2.5, -40.1, 0}, {0.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
+        {{2.5, 40.1, 0}, {3.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
+        {{-2.5, 40.1, 0}, {0.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
     })
     
     local tramTracks = coor.applyEdges(coor.mul(coor.transX(base + 7.5)), coor.I())(tramTrackCoor)
@@ -185,12 +182,10 @@ local function makeCommonPlatformTram(base, config)
             return
                 {
                     {
-                        terminals = {{trainPlatform, 1}, {trainPlatform + 1, 1}, {trainPlatform - 1, 1}, {trainPlatform - 2, 1}},
-                        vehicleNodeOverride = #xOffsets * 4 + 1
+                        terminals = {{#uOffsets * nSeg + 2, 0}, {#uOffsets * nSeg + 3, 0}, {#uOffsets * nSeg + 1, 0}, {#uOffsets * nSeg, 0}},
                     },
                     {
-                        terminals = {{#uOffsets * nSeg + 3, 0}, {#uOffsets * nSeg + 2, 0}, {#uOffsets * nSeg + 1, 0}, {#uOffsets * nSeg, 0}},
-                        vehicleNodeOverride = #xOffsets * 4 + 5
+                        terminals = {{#uOffsets * nSeg + 2, 1}, {#uOffsets * nSeg + 3, 1}, {#uOffsets * nSeg + 1, 1}, {#uOffsets * nSeg, 1}},
                     }
                 }
         end,
@@ -200,16 +195,14 @@ end
 
 local function makeIndividualPlatformTram(base, config)
     local tramTrackCoor = laneutil.makeLanes({
-        {{-2.5, 40, 0}, {-2.5, 0, 0}, {0, -1, 0}, {0, -1, 0}},
-        {{-2.5, 0, 0}, {-2.5, -40, 0}, {0, -1, 0}, {0, -1, 0}},
+        {{-2.5, 39.9, 0}, {-2.5, -39.9, 0}, {0, -1, 0}, {0, -1, 0}},
         
-        {{2.5, -40, 0}, {2.5, 0, 0}, {0, 1, 0}, {0, 1, 0}},
-        {{2.5, 0, 0}, {2.5, 40, 0}, {0, 1, 0}, {0, 1, 0}},
+        {{2.5, -39.9, 0}, {2.5, 39.9, 0}, {0, 1, 0}, {0, 1, 0}},
         
-        {{2.5, -40, 0}, {1.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
-        {{-2.5, -40, 0}, {-1.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
-        {{2.5, 40, 0}, {1.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
-        {{-2.5, 40, 0}, {-1.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
+        {{2.5, -40.1, 0}, {1.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
+        {{-2.5, -40.1, 0},{-1.5, -69.9, 0}, {0, -1, 0}, {0, -1, 0}},
+        {{2.5, 40.1, 0},  {1.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
+        {{-2.5, 40.1, 0}, {-1.5, 69.9, 0}, {0, 1, 0}, {0, 1, 0}},
     })
     
     
@@ -245,12 +238,10 @@ local function makeIndividualPlatformTram(base, config)
             return
                 {
                     {
-                        terminals = {{#uOffsets * nSeg + 3, 1}, {#uOffsets * nSeg + 2, 1}, {#uOffsets * nSeg + 1, 1}, {#uOffsets * nSeg, 1}},
-                        vehicleNodeOverride = #xOffsets * 4 + 1
+                        terminals = {{#uOffsets * nSeg + 2, 1}, {#uOffsets * nSeg + 3, 1}, {#uOffsets * nSeg + 1, 1}, {#uOffsets * nSeg, 1}},
                     },
                     {
-                        terminals = {{#uOffsets * nSeg + 7, 0}, {#uOffsets * nSeg + 6, 0}, {#uOffsets * nSeg + 5, 1}, {#uOffsets * nSeg + 4, 0}},
-                        vehicleNodeOverride = #xOffsets * 4 + 5
+                        terminals = {{#uOffsets * nSeg + 5, 1}, {#uOffsets * nSeg + 7, 0}, {#uOffsets * nSeg + 6, 0}, {#uOffsets * nSeg + 4, 0}},
                     }
                 }
         end,

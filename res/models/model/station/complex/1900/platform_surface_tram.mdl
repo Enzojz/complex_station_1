@@ -122,13 +122,19 @@ function data()
                                 {{-10, -50, 0}, {-7, -80, 0}, {0, -10, 0}, {0, -10, 0}, laneWidth},
                                 {{-5, 30, 0}, {-4, 60, 0}, {0, 10, 0}, {0, 10, 0}, laneWidth},
                                 {{-7, 60, 0}, {-10, 30, 0}, {0, -10, 0}, {0, -10, 0}, laneWidth},
+                                
+                                {{-10, 30, 0}, {-10, -10, 0}, {0, -10, 0}, {0, -10, 0}, laneWidth},
+                                {{-10, -10, 0},{-10, -50, 0},  {0, -10, 0}, {0, -10, 0}, laneWidth},
+
+                                {{-5, -50, 0}, {-5, -10, 0}, {0, 10, 0}, {0, 10, 0}, laneWidth},
+                                {{-5, -10, 0}, {-5, 30, 0}, {0, 10, 0}, {0, 10, 0}, laneWidth},
                             
                             })
                         },
                     },
                     terminals = {
-                        {personNodes = {15}, personEdges = {1, 4, 5}},
-                        {personNodes = {12}, personEdges = {0, 2, 3}}
+                        {vehicleNode = 58, personNodes = {15}, personEdges = {1, 4, 5}},
+                        {vehicleNode = 54, personNodes = {12}, personEdges = {0, 2, 3}}
                     }
                 }
             }
