@@ -22,7 +22,7 @@ function data()
                     },
                     children = {
                         {
-                            id = "station/train/passenger/1990/lod_0_perron_double_stairs.msh",
+                            id = "station/train/passenger/1920/lod_0_perron_double_stairs.msh",
                             transf = {
                                 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
                             },

@@ -57,41 +57,55 @@ local function params()
         {
             key = "trackTypeCatenary",
             name = _("Track Type & Catenary"),
-            values = {_("Normal"), _("Elec."), _("Elec.Hi-Speed"), _("Hi-Speed")},
+            values = {_("Normal"), _("Elec.")},
+            yearFrom = 1910,
+            yearTo = 1925,
             defaultIndex = 1
         },
         {
+            key = "trackTypeCatenary",
+            name = _("Track Type & Catenary"),
+            values = {_("Normal"), _("Elec."), _("Elec.Hi-Speed"), _("Hi-Speed")},
+            yearFrom = 1925,
+            yearTo = 0,
+            defaultIndex = 1
+        },
+        {
+            key = "strConnection",
+            name = _("Street Connection"),
+            values = {_("1"), _("2"), _("1 Mini"), _("2 Minis")},
+            defaultIndex = 0
+        },
+        {
+            key = "tramStop",
+            name = _("Tram Stop"),
+            values = {_("No"), _("Yes")},
+            defaultIndex = 0
+        },
+        {
             key = "offsetLat",
-            name = _("Lateral Offset") .. "(m)",
+            name = _("U Level Lateral Offset") .. "(m)",
             values = func.map(offsetLat, function(o) return tostring(math.floor(o * 7.5)) end),
+            defaultIndex = 0
         },
         {
             key = "offsetMed",
-            name = _("Medial Offset") .. "(m)",
+            name = _("U Level Medial Offset") .. "(m)",
             values = func.map(offsetMed, function(o) return tostring(math.floor(o * station.segmentLength)) end),
             defaultIndex = 4
         },
         {
             key = "angle",
-            name = _("Cross angle") .. "(°)",
+            name = _("U Level Cross Angle") .. "(°)",
             values = func.map(angleList, tostring),
             defaultIndex = 3
         },
         {
             key = "mirrored",
             name = _("Mirrored Underground Level"),
-            values = {_("No"), _("Yes")}
+            values = {_("No"), _("Yes")},
+            defaultIndex = 0
         },
-        {
-            key = "strConnection",
-            name = _("Street Connection"),
-            values = {_("1"), _("2"), _("1 Mini"), _("2 Minis")}
-        },
-        {
-            key = "tramStop",
-            name = _("Tram Stop"),
-            values = {_("No"), _("Yes")}
-        }
     }
 end
 
@@ -155,8 +169,7 @@ local function makeCommonPlatformTram(base, config)
     }, tramPlatformRoofPattern(config, base + 15))
     
     return {
-        edges1 = makeTram("z_tram_track.lua", {})(tramTracks),
-        edges2 = makeTram("new_small.lua", {1, 3})(tramTracksExt),
+        edges = {makeTram("z_tram_track.lua", {})(tramTracks), makeTram("new_small.lua", {1, 3})(tramTracksExt)},
         platforms = tramPlatform,
         face = {
             {base + 2.5, -80, 0},
@@ -217,8 +230,7 @@ local function makeIndividualPlatformTram(base, config)
         tramPlatformRoofPattern(config, base + 20)
     ))
     return {
-        edges1 = makeTram("z_tram_track.lua", {})(tramTracks),
-        edges2 = makeTram("new_small.lua", {1, 3})(tramTracksExt),
+        edges = {makeTram("z_tram_track.lua", {})(tramTracks), makeTram("new_small.lua", {1, 3})(tramTracksExt)},
         platforms = tramPlatform,
         face =
         {
@@ -283,8 +295,9 @@ local function makeUpdateFn(config)
             local strConn = params.strConnection + 1
             local hasTramStop = params.tramStop == 1
             
-            local _, preUOffsets = station.preBuild(nbTracksSf, 0, false, false)
-            local maxOffset = preUOffsets[#preUOffsets] + 7.5
+            local _, preUOffsets0 = station.preBuild(nbTracksSf, 0, false, false)
+            local _, preUOffsets1 = station.preBuild(nbTracksUG, 0, nbTracksUG % 4 == 0,nbTracksUG % 4 == 0)
+            local maxOffset = preUOffsets0[#preUOffsets0] + 7.5
             local offsetX = offsetLat[params.offsetLat + 1] * 7.5
             local offsetY = offsetMed[params.offsetMed + 1] * station.segmentLength
             
@@ -306,11 +319,11 @@ local function makeUpdateFn(config)
                 {
                     mz = coor.transZ(height),
                     mr = coor.rotZ(rad),
-                    mdr = coor.mul((params.mirrored == 0 and coor.I() or coor.flipX()), coor.rotZ(rad), coor.transX(offsetX), coor.transY(offsetY)),
+                    mdr = coor.mul(coor.transX(-preUOffsets1[1]), (params.mirrored == 0 and coor.I() or coor.flipX()), coor.rotZ(rad), coor.transX(offsetX), coor.transY(offsetY)),
                     nbTracks = nbTracksUG,
                     baseX = 0,
-                    ignoreFst = false,
-                    ignoreLst = false,
+                    ignoreFst = nbTracksUG % 4 == 0,
+                    ignoreLst = nbTracksUG % 4 == 0,
                     id = 1
                 },
             }
@@ -334,7 +347,7 @@ local function makeUpdateFn(config)
                 makeCommonPlatformTram(uOffsets0[#uOffsets0].x, config) or
                 makeIndividualPlatformTram(xOffsets0[#xOffsets0].x, config)) or
                 {
-                    platforms = {}, edges1 = nil, edges2 = nil,
+                    platforms = {}, edges = {},
                     xMax = uOffsets0[#uOffsets0].x > xOffsets0[#xOffsets0].x and uOffsets0[#uOffsets0].x or xOffsets0[#xOffsets0].x
                 }
             
@@ -425,22 +438,25 @@ local function makeUpdateFn(config)
                 entry, entry2,
             }
             )
-            result.edgeLists = {
-                trackEdge.normal(catenary, trackType, true, snapRule)(sfTracks),
-                trackEdge.tunnel(catenary, trackType, snapRule)(ugTracks),
-                tram.edges1, tram.edges2,
-                trackEdge.tunnel(false, "zzz_mock.lua", station.noSnap)(mockTracks),
-                str, str2
-            
-            }
-            
+            result.edgeLists = func.flatten(
+                {
+                    {
+                        trackEdge.normal(catenary, trackType, true, snapRule)(sfTracks),
+                        trackEdge.tunnel(catenary, trackType, snapRule)(ugTracks)
+                    },
+                    tram.edges,
+                    {
+                        trackEdge.tunnel(false, "zzz_mock.lua", station.noSnap)(mockTracks),
+                        str, str2
+                    }
+                }
+            )
             result.terminalGroups = func.flatten({
                 station.makeTerminals(xuIndex),
                 hasTramStop and tram.terminals(uOffsets, xOffsets, nSeg) or {}
             })
             
             -- local totalWidth = station.trackWidth * #ofGroup(xOffsets, 0) + station.platformWidth * #ofGroup(uOffsets, 0)
-            
             local xMin = -0.5 * station.platformWidth
             -- local xMax = xMin + totalWidth
             local yMin = -0.5 * length
