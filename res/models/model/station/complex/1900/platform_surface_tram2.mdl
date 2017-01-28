@@ -119,15 +119,12 @@ function data()
                             nodes = laneutil.makeLanes({
                                 {{6, -80, 0}, {5, -50, 0}, {0, 10, 0}, {0, 10, 0}, laneWidth},
                                 {{10, -50, 0}, {9, -80, 0}, {0, -10, 0}, {0, -10, 0}, laneWidth},
-
-                                {{5, 30, 0}, {5, -10, 0}, {0, -10, 0}, {0, -10, 0}, laneWidth},
-                                {{5, -10, 0},{5, -50, 0}, {0, -10, 0}, {0, -10, 0}, laneWidth},
                             })
                         },
                     },
                     terminals = {
                         {personNodes = {15}, personEdges = {1, 4, 5}},
-                        {vehicleNode = 50, personNodes = {12}, personEdges = {0, 2, 3}}
+                        {personNodes = {12}, personEdges = {0, 2, 3}}
                     }
                 }
             }
