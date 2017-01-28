@@ -1,7 +1,7 @@
 function data()
     return {
-        numLanes = 2,
-        streetWidth = 5.0,
+        numLanes = 1,
+        streetWidth = 3,
         sidewalkWidth = 0,
         sidewalkHeight = .0,
         yearFrom = 1920,
@@ -15,9 +15,9 @@ function data()
         name = _("Tram track"),
         desc = _("Tram-only track with a speed limit of %2%"),
         materials = {
-            streetPaving = {name = "street/new_medium_paving.mtl", size = {5.0, 5.0}},
+            streetPaving = {name = "street/new_small_paving.mtl", size = {6.0, 6.0}},
             streetBorder = {},
-            streetLane = {name = "street/new_medium_lane.mtl", size = {6.0, 4.0}},
+            streetLane = {name = "street/new_small_lane.mtl", size = {3.0, 3.0}},
             streetStripe = {},
             streetStripeMedian = {},
             streetTram = {name = "street/new_medium_tram.mtl", size = {2.0, 2.0}},

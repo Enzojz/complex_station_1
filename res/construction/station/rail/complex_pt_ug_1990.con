@@ -83,6 +83,7 @@ local config = {
         platformStart = path.."platform_double_start.mdl",
         platformEnd = path.."platform_double_end.mdl",
         platformDwlink = localPath.."platform_surface_tram.mdl",
+        platformDwlink2 = localPath.."platform_surface_tram2.mdl",
     },
     platformRoofRepeat = path.."platform_double_roof_repeat.mdl",
     platformRoofStart = path.."platform_double_roof_start.mdl",
