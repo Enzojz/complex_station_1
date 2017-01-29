@@ -92,4 +92,4 @@ local config = {
     stairesPlatform = localPath.."platform_single_stairs_second.mdl"
 }
 
-data = station.makeUpdateFn(config)
+data = station.makeComplexUG(config)
