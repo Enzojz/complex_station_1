@@ -252,6 +252,11 @@ local function makeIndividualPlatformTram(base, config, tramType)
         tramPlatformRoofPattern(config, base + 5),
         tramPlatformRoofPattern(config, base + 20)
     ))
+    
+    
+    
+    
+    
     return {
         edges = {makeTram("z_tram_track.lua", tramType, {})(tramTracks), makeTram("new_small.lua", tramType, {1, 3})(tramTracksExt)},
         platforms = tramPlatform,
@@ -291,9 +296,8 @@ local function platformPatterns(config)
     end
 end
 
-local function makeUpdateFn(config, hasUGLevel)
-    
-    local roofPatterns = function(n)
+local function roofPatterns(config)
+    return function(n)
         local roofs = func.seqMap({1, n}, function(_) return config.platformRoofRepeat end)
         if (n > 2) then
             roofs[1] = config.platformRoofStart
@@ -301,6 +305,96 @@ local function makeUpdateFn(config, hasUGLevel)
         end
         return roofs
     end
+end
+
+local function makeEntry(config, strConn, uOffsets, nSeg, platformsS, roofs)
+    local uOffsets0 = ofGroup(uOffsets, 0)
+    local yHouse = ({15, 25, 30})[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
+    local house = config.surface.house[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
+    return function()
+        if (strConn < 3) then
+            platformsS[math.ceil(nSeg * 0.5)].id = config.surface.platformFstRepeat
+            platformsS[math.ceil(nSeg * 0.5 + 1)].id = config.surface.platformFstRepeat
+            return
+                {
+                    newModel(house, coor.rotZ(math.pi * 1.5), coor.transX(-5.5))
+                },
+                makeStreet({
+                    {{-5.5 - 10, 0, 0}, {-10, 0, 0}},
+                    {{-5.5 - 30, 0, 0}, {-10, 0, 0}}
+                }),
+                {
+                    {0, yHouse, 0},
+                    {-15.5, yHouse, 0},
+                    {-15.5, -yHouse, 0},
+                    {0, -yHouse, 0},
+                }
+        else
+            func.forEach(station.makePlatforms({uOffsets[1]}, roofPatterns(config)(nSeg)), func.bind(table.insert, roofs))
+            return
+                {
+                    newModel(config.staires, coor.transX(0.5 * station.trackWidth), coor.rotZ(math.pi))
+                },
+                makeStreet({
+                    {{4 - 10, 0, 0}, {-10, 0, 0}},
+                    {{4 - 30, 0, 0}, {-10, 0, 0}}
+                }),
+                {
+                    {0, 6, 0},
+                    {-6, 6, 0},
+                    {-6, -6, 0},
+                    {0, -6, 0},
+                }
+        end
+    end
+end
+
+local function makeEntry2(config, strConn, xOffsets, uOffsets, hasTramStop, xMax)
+    local uOffsets0 = ofGroup(uOffsets, 0)
+    local xOffsets0 = ofGroup(xOffsets, 0)
+    return function()
+        if (strConn == 2 or strConn == 4) then
+            local xRef = xMax - 0.5 * station.platformWidth
+            if ((xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x) or hasTramStop) then
+                return
+                    {
+                        newModel(config.staires, coor.transX(xRef + 0.5 * station.trackWidth))
+                    },
+                    makeStreet({
+                        {{xRef + 6, 0, 0}, {10, 0, 0}},
+                        {{xRef + 26, 0, 0}, {10, 0, 0}}
+                    }),
+                    {
+                        {xRef, -6, 0},
+                        {xRef + 6, -6, 0},
+                        {xRef + 6, 6, 0},
+                        {xRef, 6, 0}
+                    }
+            else
+                return
+                    {
+                        newModel(config.stairesPlatform, coor.transX(xRef + station.trackWidth)),
+                        newModel(config.staires, coor.transX(xRef + 0.5 + station.trackWidth))
+                    },
+                    makeStreet({
+                        {{xRef + 9, 0, 0}, {10, 0, 0}},
+                        {{xRef + 29, 0, 0}, {10, 0, 0}}
+                    }),
+                    {
+                        {xRef, -12, 0},
+                        {xRef + 9, -12, 0},
+                        {xRef + 9, 12, 0},
+                        {xRef, 12, 0}
+                    }
+            end
+        else
+            return {}, nil, nil
+        end
+    end
+end
+
+local function makeUpdateFn(config, hasUGLevel)
+    
     
     local stationHouse = config.stationHouse
     local staires = config.staires
@@ -398,91 +492,19 @@ local function makeUpdateFn(config, hasUGLevel)
             
             local xMax = tram.xMax
             
-            local house = config.surface.house[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
+            local platformsS = station.makePlatforms(ofGroup(uOffsets, 0), platformsSF)
+            local platformsU = station.makePlatforms(ofGroup(uOffsets, 1), platformsUG)
+            local roofs = station.makePlatforms(func.range(uOffsets0, 2, #uOffsets0), roofPatterns(config)(nSeg))
             
-            local platformsS, platformsU, roofs =
-                station.makePlatforms(ofGroup(uOffsets, 0), platformsSF),
-                station.makePlatforms(ofGroup(uOffsets, 1), platformsUG),
-                station.makePlatforms(func.range(uOffsets0, 2, #uOffsets0), roofPatterns(nSeg))
-            
-            local makeEntry = function()
-                if (strConn < 3) then
-                    local yHouse = ({15, 25, 30})[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
-                    platformsS[math.ceil(nSeg * 0.5)].id = config.surface.platformFstRepeat
-                    platformsS[math.ceil(nSeg * 0.5 + 1)].id = config.surface.platformFstRepeat
-                    return
-                        {newModel(house, coor.rotZ(math.pi * 1.5), coor.transX(-5.5))},
-                        makeStreet({
-                            {{-5.5 - 10, 0, 0}, {-10, 0, 0}},
-                            {{-5.5 - 30, 0, 0}, {-10, 0, 0}}
-                        }),
-                        {
-                            {0, yHouse, 0},
-                            {-15.5, yHouse, 0},
-                            {-15.5, -yHouse, 0},
-                            {0, -yHouse, 0},
-                        }
-                else
-                    func.forEach(station.makePlatforms({uOffsets[1]}, roofPatterns(nSeg)), func.bind(table.insert, roofs))
-                    return
-                        {newModel(config.staires, coor.transX(0.5 * station.trackWidth), coor.rotZ(math.pi))},
-                        makeStreet({
-                            {{4 - 10, 0, 0}, {-10, 0, 0}},
-                            {{4 - 30, 0, 0}, {-10, 0, 0}}
-                        }),
-                        {
-                            {0, 6, 0},
-                            {-6, 6, 0},
-                            {-6, -6, 0},
-                            {0, -6, 0},
-                        }
-                end
-            end
-            
-            local makeEntry2 = function()
-                if (strConn == 2 or strConn == 4) then
-                    local xRef = xMax - 0.5 * station.platformWidth
-                    if ((xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x) or hasTramStop) then
-                        return
-                            {newModel(config.staires, coor.transX(xRef + 0.5 * station.trackWidth))},
-                            makeStreet({
-                                {{xRef + 6, 0, 0}, {10, 0, 0}},
-                                {{xRef + 26, 0, 0}, {10, 0, 0}}
-                            })
-                            , {
-                                {xRef, -6, 0},
-                                {xRef + 6, -6, 0},
-                                {xRef + 6, 6, 0},
-                                {xRef, 6, 0}
-                            }
-                    else
-                        return
-                            {newModel(config.stairesPlatform, coor.transX(xRef + station.trackWidth)),
-                                newModel(config.staires, coor.transX(xRef + 0.5 + station.trackWidth))},
-                            makeStreet({
-                                {{xRef + 9, 0, 0}, {10, 0, 0}},
-                                {{xRef + 29, 0, 0}, {10, 0, 0}}
-                            }),
-                            {
-                                {xRef, -12, 0},
-                                {xRef + 9, -12, 0},
-                                {xRef + 9, 12, 0},
-                                {xRef, 12, 0}
-                            }
-                    end
-                else
-                    return {}, nil, nil
-                end
-            end
-            
-            local entry, str, fE = makeEntry()
-            local entry2, str2, fE2 = makeEntry2()
+            local entry, str, fE = makeEntry(config, strConn, uOffsets0, nSeg, platformsS, roofs)()
+            local entry2, str2, fE2 = makeEntry2(config, strConn, xOffsets, uOffsets0, hasTramStop, xMax)()
             
             result.models = func.flatten({
                 platformsS, platformsU, tram.platforms, roofs,
                 entry, entry2,
             }
             )
+
             result.edgeLists = func.flatten(
                 {
                     {
