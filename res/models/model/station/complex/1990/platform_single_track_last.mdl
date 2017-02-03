@@ -1,0 +1,50 @@
+function data()
+return {
+
+	collider = {
+		params = {
+			
+		},
+		type = "MESH",
+		
+	},
+	lods = {
+		{
+			animations = {
+				
+			},
+			children = {
+				{
+					id = "station/train/passenger/1990/lod_0_perron_terminal_singletrack_width_end.msh",
+					transf = {
+						1, 0, 0, 0, 
+						0, 1, 0, 0, 
+						0, 0, 1, 0, 
+						-2.8, 0, 0, 1, 
+					},
+					type = "MESH",
+					
+				}, 							
+				
+			},
+			events = {
+				
+			},
+			matConfigs = {
+				{
+					0, 0, 0, 
+				}, 
+			},
+			static = false,
+			visibleFrom = 0,
+			visibleTo = 1330,
+			
+		}, 
+	},
+	metadata = {
+		
+	},
+	
+}
+end
+				

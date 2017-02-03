@@ -310,45 +310,47 @@ local function makeThrough(config, xOffsets, uOffsets, nSeg)
     local uOffsets1 = ofGroup(uOffsets, 1)
     local xOffsets1 = ofGroup(xOffsets, 1)
     local length = station.segmentLength * nSeg
+    
+    local function makeMainEntry(platformsS, roofs)
+        local yHouse = ({15, 25, 30})[#uOffsets0 > 4 and 4 or math.ceil(#uOffsets0 * 0.5 + 1)]
+        local house = config.surface.house[#uOffsets0 > 4 and 4 or math.ceil(#uOffsets0 * 0.5 + 1)]
+        
+        platformsS[math.ceil(nSeg * 0.5)].id = config.surface.platformFstRepeat
+        platformsS[math.ceil(nSeg * 0.5 + 1)].id = config.surface.platformFstRepeat
+        return
+            {
+                newModel(house, coor.rotZ(math.pi * 1.5), coor.transX(-5.5))
+            },
+            makeStreet({
+                {{-5.5 - 10, 0, 0}, {-10, 0, 0}},
+                {{-5.5 - 30, 0, 0}, {-10, 0, 0}}
+            }),
+            {
+                {0, yHouse, 0}, {-15.5, yHouse, 0},
+                {-15.5, -yHouse, 0}, {0, -yHouse, 0},
+            }
+    end
+    
+    local function makeMainStairsEntry(roofs)
+        func.forEach(station.makePlatforms({uOffsets[1]}, roofPatterns(config)(nSeg)), func.bind(table.insert, roofs))
+        return
+            {
+                newModel(config.staires, coor.transX(0.5 * station.trackWidth), coor.rotZ(math.pi))
+            },
+            makeStreet({
+                {{4 - 10, 0, 0}, {-10, 0, 0}},
+                {{4 - 30, 0, 0}, {-10, 0, 0}}
+            }),
+            {
+                {0, 6, 0}, {-6, 6, 0},
+                {-6, -6, 0}, {0, -6, 0},
+            }
+    end
+    
     return {
         makeEntry = function(strConn, platformsS, roofs)
-            local yHouse = ({15, 25, 30})[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
-            local house = config.surface.house[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
             return function()
-                if (strConn < 3) then
-                    platformsS[math.ceil(nSeg * 0.5)].id = config.surface.platformFstRepeat
-                    platformsS[math.ceil(nSeg * 0.5 + 1)].id = config.surface.platformFstRepeat
-                    return
-                        {
-                            newModel(house, coor.rotZ(math.pi * 1.5), coor.transX(-5.5))
-                        },
-                        makeStreet({
-                            {{-5.5 - 10, 0, 0}, {-10, 0, 0}},
-                            {{-5.5 - 30, 0, 0}, {-10, 0, 0}}
-                        }),
-                        {
-                            {0, yHouse, 0},
-                            {-15.5, yHouse, 0},
-                            {-15.5, -yHouse, 0},
-                            {0, -yHouse, 0},
-                        }
-                else
-                    func.forEach(station.makePlatforms({uOffsets[1]}, roofPatterns(config)(nSeg)), func.bind(table.insert, roofs))
-                    return
-                        {
-                            newModel(config.staires, coor.transX(0.5 * station.trackWidth), coor.rotZ(math.pi))
-                        },
-                        makeStreet({
-                            {{4 - 10, 0, 0}, {-10, 0, 0}},
-                            {{4 - 30, 0, 0}, {-10, 0, 0}}
-                        }),
-                        {
-                            {0, 6, 0},
-                            {-6, 6, 0},
-                            {-6, -6, 0},
-                            {0, -6, 0},
-                        }
-                end
+                return (strConn < 3) and makeMainEntry(platformsS, roofs) or makeMainStairsEntry(roofs)
             end
         end,
         
@@ -366,10 +368,8 @@ local function makeThrough(config, xOffsets, uOffsets, nSeg)
                                 {{xRef + 26, 0, 0}, {10, 0, 0}}
                             }),
                             {
-                                {xRef, -6, 0},
-                                {xRef + 6, -6, 0},
-                                {xRef + 6, 6, 0},
-                                {xRef, 6, 0}
+                                {xRef, -6, 0}, {xRef + 6, -6, 0},
+                                {xRef + 6, 6, 0}, {xRef, 6, 0}
                             }
                     else
                         return
@@ -382,10 +382,8 @@ local function makeThrough(config, xOffsets, uOffsets, nSeg)
                                 {{xRef + 29, 0, 0}, {10, 0, 0}}
                             }),
                             {
-                                {xRef, -12, 0},
-                                {xRef + 9, -12, 0},
-                                {xRef + 9, 12, 0},
-                                {xRef, 12, 0}
+                                {xRef, -12, 0}, {xRef + 9, -12, 0},
+                                {xRef + 9, 12, 0}, {xRef, 12, 0}
                             }
                     end
                 else
@@ -396,8 +394,8 @@ local function makeThrough(config, xOffsets, uOffsets, nSeg)
         
         makeTrackGroups = function()
             return {
-                sf = station.generateTrackGroups(xOffsets0, length + 5),
-                ug = station.generateTrackGroups(xOffsets1, length + 5),
+                surface = station.generateTrackGroups(xOffsets0, length + 5),
+                underground = station.generateTrackGroups(xOffsets1, length + 5),
                 mock = station.generateTrackGroups(ofGroup(uOffsets, 1), length)
             }
         end,
@@ -424,31 +422,62 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
     return {
         makeEntry = function(strConn, platformsS, roofs)
             local yOffset = -nSeg * station.segmentLength * 0.5
-            local xHouse = ({15, 25, 30})[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
-            local house = config.surface.house[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5)]
+            local allOffsets = func.sort(func.flatten(
+                {
+                    func.map(xOffsets, function(o) return func.with(o, {isTrack = true}) end),
+                    func.map(uOffsets, function(o) return func.with(o, {isTrack = false}) end)
+                }
+            ), function(l, r) return l.x < r.x end)
             
-            local allOffset = func.map(func.flatten({uOffsets0, xOffsets0}), function(o) return o.x end)
-            table.sort(allOffset)
-            local baseX = (allOffset[math.ceil((1 + #allOffset) * 0.5)] + allOffset[math.floor((1 + #allOffset) * 0.5)]) * 0.5
+            local xHouse = ({10, 15, 25, 30})[#allOffsets > 14 and 4 or math.floor(#allOffsets * 0.33 + 0.3)]
+            local house = config.surface.house[#allOffsets > 14 and 4 or math.floor(#allOffsets * 0.33 + 0.3)]
+            
+            local baseX = (allOffsets[math.ceil((1 + #allOffsets) * 0.5)].x + allOffsets[math.floor((1 + #allOffsets) * 0.5)].x) * 0.5
             
             return function()
                 return
                     func.flatten(
                         {
                             {newModel(house, coor.transY(yOffset - 10), coor.transX(baseX))},
-                            func.map(xOffsets0, function(x) return newModel(config.surface.platformHeadTrack, coor.transY(yOffset), x.mpt) end),
-                            func.map(uOffsets0, function(x) return newModel(config.surface.platformHead, coor.transY(yOffset), x.mpt) end)
+                            (function()
+                                local function fn(i, res)
+                                    local next = function(...) return fn(i + 1, func.concat(res, {...})) end
+                                    local l = allOffsets[i - 1]
+                                    local c = allOffsets[i]
+                                    local r = allOffsets[i + 1]
+                                    if (c == nil) then
+                                        return res
+                                    elseif (l == nil and c.isTrack) then --First as track
+                                        return next(newModel(config.surface.platformHeadTrackEnd, coor.flipX(), coor.transY(yOffset), c.mpt))
+                                    elseif (c.isTrack and r == nil) then -- Last as track
+                                        return next(newModel(config.surface.platformHeadTrackEnd, coor.transY(yOffset), c.mpt))
+                                    elseif (l == nil and not c.isTrack) then -- First as platform
+                                        return next(newModel(config.surface.platformHeadPlatformEnd, coor.flipX(), coor.transY(yOffset), c.mpt))
+                                    elseif (not c.isTrack and r == nil) then -- Last as platform
+                                        return next(newModel(config.surface.platformHeadPlatformEnd, coor.transY(yOffset), c.mpt))
+                                    elseif (not c.isTrack) then -- Platforms
+                                        return next(newModel(config.surface.platformHead, coor.transY(yOffset), c.mpt))
+                                    elseif (c.isTrack and r.isTrack) then
+                                        return next(newModel(config.surface.platformHeadTrack, coor.transY(yOffset), c.mpt))
+                                    elseif (c.isTrack and not r.isTrack) then
+                                        return next()
+                                    else
+                                        return next()
+                                    end
+                                end
+                                return fn(1, {})
+                            end)()
                         }
                     ),
                     makeStreet({
-                        {{baseX, yOffset - 15, 0}, {0, -1, 0}},
-                        {{baseX, yOffset - 45, 0}, {0, -1, 0}}
+                        {{baseX, yOffset - 20, 0}, {0, -1, 0}},
+                        {{baseX, yOffset - 50, 0}, {0, -1, 0}}
                     }),
                     {
-                        {0, xHouse, 0},
-                        {-15.5, xHouse, 0},
-                        {-15.5, -xHouse, 0},
-                        {0, -xHouse, 0},
+                        {baseX + xHouse, yOffset, 0},
+                        {baseX - xHouse, yOffset, 0},
+                        {baseX - xHouse, yOffset - 15.5, 0},
+                        {baseX + xHouse, yOffset - 15.5, 0},
                     }
             end
         end,
@@ -502,8 +531,8 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
             }
             
             return {
-                sf = station.generateTrackGroups(xOffsets0, length + 5, extra),
-                ug = station.generateTrackGroups(xOffsets1, length + 5),
+                surface = station.generateTrackGroups(xOffsets0, length + 5, extra),
+                underground = station.generateTrackGroups(xOffsets1, length + 5),
                 mock = station.generateTrackGroups(ofGroup(uOffsets, 1), length)
             }
         end,
@@ -629,8 +658,8 @@ local function makeUpdateFn(config, hasUGLevel, makers)
             result.edgeLists = func.flatten(
                 {
                     {
-                        trackEdge.normal(catenary, trackType, true, snapRule)(tracks.sf),
-                        trackEdge.tunnel(catenary, trackType, snapRule)(tracks.ug)
+                        trackEdge.normal(catenary, trackType, true, snapRule)(tracks.surface),
+                        trackEdge.tunnel(catenary, trackType, snapRule)(tracks.underground)
                     },
                     tram.edges,
                     {
