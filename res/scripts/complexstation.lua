@@ -133,6 +133,102 @@ local function paramsUG()
     }
 end
 
+
+local function paramsTerminalTram()
+    return {
+        {
+            key = "nbTracksSf",
+            name = _("Ground Level: Number of tracks"),
+            values = func.map(nbTracksLevelList, tostring),
+        },
+        {
+            key = "length",
+            name = _("Platform length") .. "(m)",
+            values = func.map(platformSegments, function(l) return tostring(l * station.segmentLength) end),
+            defaultIndex = 2
+        },
+        paramsutil.makeTrackTypeParam(),
+        paramsutil.makeTrackCatenaryParam(),
+        {
+            key = "strConnection",
+            name = _("Street Connection"),
+            values = {_("1"), _("2"), _("Tram"), _("2").."+".._("Tram")},
+            defaultIndex = 0
+        },
+        paramsutil.makeTramTrackParam1(),
+        paramsutil.makeTramTrackParam2()
+    }
+end
+
+local function paramsTerminalUG()
+    return {
+        {
+            key = "nbTracksSf",
+            name = _("Ground Level: Number of tracks"),
+            values = func.map(nbTracksLevelList, tostring),
+        },
+        {
+            key = "nbTracksUG",
+            name = _("Underground Level: Number of tracks"),
+            values = func.map(nbTracksLevelList, tostring),
+        },
+        {
+            key = "length",
+            name = _("Platform length") .. "(m)",
+            values = func.map(platformSegments, function(l) return tostring(l * station.segmentLength) end),
+            defaultIndex = 2
+        },
+        {
+            key = "trackTypeCatenary",
+            name = _("Track Type & Catenary"),
+            values = {_("Normal"), _("Elec.")},
+            yearFrom = 1910,
+            yearTo = 1925,
+            defaultIndex = 1
+        },
+        {
+            key = "trackTypeCatenary",
+            name = _("Track Type & Catenary"),
+            values = {_("Normal"), _("Elec."), _("Elec.Hi-Speed"), _("Hi-Speed")},
+            yearFrom = 1925,
+            yearTo = 0,
+            defaultIndex = 1
+        },
+        {
+            key = "strConnection",
+            name = _("Street Connection"),
+            values = {_("1"), _("2"), _("Tram"), _("2").."+".._("Tram")},
+            defaultIndex = 0
+        },
+        paramsutil.makeTramTrackParam1(),
+        paramsutil.makeTramTrackParam2(),
+        {
+            key = "offsetLat",
+            name = _("U Level Lateral Offset") .. "(m)",
+            values = func.map(offsetLat, function(o) return tostring(math.floor(o * 7.5)) end),
+            defaultIndex = 0
+        },
+        {
+            key = "offsetMed",
+            name = _("U Level Medial Offset") .. "(m)",
+            values = func.map(offsetMed, function(o) return tostring(math.floor(o * station.segmentLength)) end),
+            defaultIndex = 4
+        },
+        {
+            key = "angle",
+            name = _("U Level Cross Angle") .. "(°)",
+            values = func.map(angleList, tostring),
+            defaultIndex = 3
+        },
+        {
+            key = "mirrored",
+            name = _("Mirrored Underground Level"),
+            values = {_("No"), _("Yes")},
+            defaultIndex = 0
+        },
+    }
+end
+
 local function makeTram(type, tramType, snapNode)
     return function(edges)
         return {
@@ -507,32 +603,32 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
         
         makeEntry2 = function(strConn, hasTramStop, xMax)
             return function()
-                if (strConn == 2 or strConn == 4) then
-                    local xRef = xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x and uOffsets0[#uOffsets0].x or xOffsets0[#xOffsets0].x
-                    local yOffset = length * 0.5 - 2 * station.segmentLength
-                    local entryRight = (hasTramStop and nSeg < 9)
-                        and {models = {}, streets = {}, faces = {}}
-                        or (
-                        (xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x)
-                        and makeStairsEntry(config, coor.trans({x = xRef, y = yOffset, z = 0}))
-                        or makePlatformStairsEntry(config, coor.trans({x = xRef, y = yOffset, z = 0}))
-                        )
-                    local entryLeft = (xOffsets0[1].x < uOffsets0[1].x)
-                        and makePlatformStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
-                        or makeStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
-                    local entryTram = hasTramStop
-                        and makeStairsEntry(config, coor.trans({x = xMax - 0.5 * station.platformWidth, y = tramOffset, z = 0}))
-                        or {models = {}, streets = {}, faces = {}}
-                    
-                    return
-                        {
-                            models = func.flatten({entryRight.models, entryLeft.models, entryTram.models}),
-                            streets = func.flatten({entryRight.streets, entryLeft.streets, entryTram.streets}),
-                            faces = func.flatten({entryRight.faces, entryLeft.faces, entryTram.faces})
-                        }
-                else
-                    return {models = {}, streets = {}, faces = {}}
-                end
+                local xRef = xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x and uOffsets0[#uOffsets0].x or xOffsets0[#xOffsets0].x
+                local yOffset = length * 0.5 - 2 * station.segmentLength
+                local entryRight = ((hasTramStop and nSeg < 9) or (strConn == 1 or strConn == 3))
+                    and {models = {}, streets = {}, faces = {}}
+                    or (
+                    (xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x)
+                    and makeStairsEntry(config, coor.trans({x = xRef, y = yOffset, z = 0}))
+                    or makePlatformStairsEntry(config, coor.trans({x = xRef, y = yOffset, z = 0}))
+                )
+                local entryLeft = (strConn == 1 or strConn == 3)
+                    and {models = {}, streets = {}, faces = {}}
+                    or (
+                    (xOffsets0[1].x < uOffsets0[1].x)
+                    and makePlatformStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
+                    or makeStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
+                )
+                local entryTram = (hasTramStop and strConn > 2)
+                    and makeStairsEntry(config, coor.trans({x = xMax - 0.5 * station.platformWidth, y = tramOffset, z = 0}))
+                    or {models = {}, streets = {}, faces = {}}
+                
+                return
+                    {
+                        models = func.flatten({entryRight.models, entryLeft.models, entryTram.models}),
+                        streets = func.flatten({entryRight.streets, entryLeft.streets, entryTram.streets}),
+                        faces = func.flatten({entryRight.faces, entryLeft.faces, entryTram.faces})
+                    }
             end
         end,
         
@@ -777,7 +873,7 @@ local complex = {
                 availability = config.availability,
                 order = config.order,
                 soundConfig = config.soundConfig,
-                params = paramsTram(),
+                params = paramsTerminalTram(),
                 updateFn = makeUpdateFn(config, false, makeTerminal)
             }
         end
@@ -795,7 +891,7 @@ local complex = {
                 availability = config.availability,
                 order = config.order,
                 soundConfig = config.soundConfig,
-                params = paramsUG(),
+                params = paramsTerminalUG(),
                 updateFn = makeUpdateFn(config, true, makeTerminal)
             }
         end
