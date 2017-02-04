@@ -308,6 +308,49 @@ local function roofPatterns(config)
     end
 end
 
+local function makeStairsEntry(config, mpt, mr)
+    return {
+        models =
+        {
+            newModel(config.staires, coor.transX(0.5 * station.trackWidth), mpt)
+        },
+        streets = {
+            makeStreet(coor.applyEdges(mpt, mr or coor.I())({
+                {{6, 0, 0}, {10, 0, 0}},
+                {{26, 0, 0}, {10, 0, 0}}
+            }))
+        },
+        faces = func.map({
+            {
+                {0, -6, 0}, {6, -6, 0},
+                {6, 6, 0}, {0, 6, 0}
+            }
+        }, station.faceMapper(mpt))
+    }
+end
+
+local function makePlatformStairsEntry(config, mpt, mr)
+    return {
+        models =
+        {
+            newModel(config.stairesPlatform, coor.transX(station.trackWidth), mpt),
+            newModel(config.staires, coor.transX(3 + 0.5 * station.trackWidth), mpt)
+        },
+        streets = {
+            makeStreet(coor.applyEdges(mpt, mr or coor.I())({
+                {{9, 0, 0}, {10, 0, 0}},
+                {{29, 0, 0}, {10, 0, 0}}
+            }))
+        },
+        faces = func.map({
+            {
+                {0, -12, 0}, {9, -12, 0},
+                {9, 12, 0}, {0, 12, 0}
+            }
+        }, station.faceMapper(mpt))
+    }
+end
+
 local function makeThrough(config, xOffsets, uOffsets, nSeg)
     local uOffsets0 = ofGroup(uOffsets, 0)
     local xOffsets0 = ofGroup(xOffsets, 0)
@@ -345,24 +388,7 @@ local function makeThrough(config, xOffsets, uOffsets, nSeg)
                     }
                 else
                     func.forEach(station.makePlatforms({uOffsets0[1]}, roofPatterns(config)(nSeg)), func.bind(table.insert, platforms.roofs))
-                    return {
-                        models = {
-                            newModel(config.staires, coor.transX(0.5 * station.trackWidth), coor.rotZ(math.pi))
-                        },
-                        streets =
-                        {
-                            makeStreet({
-                                {{4 - 10, 0, 0}, {-10, 0, 0}},
-                                {{4 - 30, 0, 0}, {-10, 0, 0}}
-                            })
-                        },
-                        faces = {
-                            {
-                                {0, 6, 0}, {-6, 6, 0},
-                                {-6, -6, 0}, {0, -6, 0},
-                            }
-                        }
-                    }
+                    return makeStairsEntry(config, coor.rotZ(math.pi), coor.rotZ(math.pi))
                 end
             end
         end,
@@ -371,46 +397,9 @@ local function makeThrough(config, xOffsets, uOffsets, nSeg)
             return function()
                 if (strConn == 2 or strConn == 4) then
                     local xRef = xMax - 0.5 * station.platformWidth
-                    if ((xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x) or hasTramStop) then
-                        return {
-                            models =
-                            {
-                                newModel(config.staires, coor.transX(xRef + 0.5 * station.trackWidth))
-                            },
-                            streets = {
-                                makeStreet({
-                                    {{xRef + 6, 0, 0}, {10, 0, 0}},
-                                    {{xRef + 26, 0, 0}, {10, 0, 0}}
-                                })
-                            },
-                            faces = {
-                                {
-                                    {xRef, -6, 0}, {xRef + 6, -6, 0},
-                                    {xRef + 6, 6, 0}, {xRef, 6, 0}
-                                }
-                            }
-                        }
-                    else
-                        return {
-                            models =
-                            {
-                                newModel(config.stairesPlatform, coor.transX(xRef + station.trackWidth)),
-                                newModel(config.staires, coor.transX(xRef + 0.5 + station.trackWidth))
-                            },
-                            streets = {
-                                makeStreet({
-                                    {{xRef + 9, 0, 0}, {10, 0, 0}},
-                                    {{xRef + 29, 0, 0}, {10, 0, 0}}
-                                })
-                            },
-                            faces = {
-                                {
-                                    {xRef, -12, 0}, {xRef + 9, -12, 0},
-                                    {xRef + 9, 12, 0}, {xRef, 12, 0}
-                                }
-                            }
-                        }
-                    end
+                    return ((xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x) or hasTramStop)
+                        and makeStairsEntry(config, coor.trans({x = xRef, y = 0, z = 0}))
+                        or makePlatformStairsEntry(config, coor.trans({x = xRef, y = 0, z = 0}))
                 else
                     return {models = {}, streets = {}, faces = {}}
                 end
@@ -453,8 +442,8 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
             local yOffset = -nSeg * station.segmentLength * 0.5
             local allOffsets = func.sort(func.flatten(
                 {
-                    func.map(xOffsets, function(o) return func.with(o, {isTrack = true}) end),
-                    func.map(uOffsets, function(o) return func.with(o, {isTrack = false}) end)
+                    func.map(xOffsets0, function(o) return func.with(o, {isTrack = true}) end),
+                    func.map(uOffsets0, function(o) return func.with(o, {isTrack = false}) end)
                 }
             ), function(l, r) return l.x < r.x end)
             
@@ -501,7 +490,7 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
                     streets = {
                         makeStreet({
                             {{baseX, yOffset - 20, 0}, {0, -1, 0}},
-                            {{baseX, yOffset - 50, 0}, {0, -1, 0}}
+                            {{baseX, yOffset - 40, 0}, {0, -1, 0}}
                         })
                     },
                     faces = {
@@ -518,59 +507,32 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
         
         makeEntry2 = function(strConn, hasTramStop, xMax)
             return function()
-                return {models = {}, streets = {}, faces = {}}
-            -- if (strConn == 2 or strConn == 4) then
-            --     local xRef = xMax - 0.5 * station.platformWidth
-            --     if (hasTramStop) then
-            --         return {
-            --             newModel(config.staires, coor.transX(xRef + 0.5 * station.trackWidth), coor.transY(tramOffset))
-            --         },
-            --         makeStreet({
-            --             {{xRef + 6, tramOffset, 0}, {10, tramOffset, 0}},
-            --             {{xRef + 26, tramOffset, 0}, {10, tramOffset, 0}}
-            --         }),
-            --         {
-            --             {xRef, -6 + tramOffset, 0},
-            --             {xRef + 6, -6 + tramOffset, 0},
-            --             {xRef + 6, 6 + tramOffset, 0},
-            --             {xRef, 6 + tramOffset, 0}
-            --         }
-            --     end
-            --     -- if (xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x) then
-            --     --     return
-            --     --         {
-            --     --             newModel(config.staires, coor.transX(xRef + 0.5 * station.trackWidth), coor.transY(tramOffset))
-            --     --         },
-            --     --         makeStreet({
-            --     --             {{xRef + 6, tramOffset, 0}, {10, tramOffset, 0}},
-            --     --             {{xRef + 26, tramOffset, 0}, {10, tramOffset, 0}}
-            --     --         }),
-            --     --         {
-            --     --             {xRef, -6 + tramOffset, 0},
-            --     --             {xRef + 6, -6 + tramOffset, 0},
-            --     --             {xRef + 6, 6 + tramOffset, 0},
-            --     --             {xRef, 6 + tramOffset, 0}
-            --     --         }
-            --     -- else
-            --     --     return
-            --     --         {
-            --     --             newModel(config.stairesPlatform, coor.transX(xRef + station.trackWidth)),
-            --     --             newModel(config.staires, coor.transX(xRef + 0.5 + station.trackWidth))
-            --     --         },
-            --     --         makeStreet({
-            --     --             {{xRef + 9, 0, 0}, {10, 0, 0}},
-            --     --             {{xRef + 29, 0, 0}, {10, 0, 0}}
-            --     --         }),
-            --     --         {
-            --     --             {xRef, -12, 0},
-            --     --             {xRef + 9, -12, 0},
-            --     --             {xRef + 9, 12, 0},
-            --     --             {xRef, 12, 0}
-            --     --         }
-            --     -- end
-            -- else
-            --     return {}, nil, nil
-            -- end
+                if (strConn == 2 or strConn == 4) then
+                    local xRef = xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x and uOffsets0[#uOffsets0].x or xOffsets0[#xOffsets0].x
+                    local yOffset = length * 0.5 - 2 * station.segmentLength
+                    local entryRight = (hasTramStop and nSeg < 9)
+                        and {models = {}, streets = {}, faces = {}}
+                        or (
+                        (xOffsets0[#xOffsets0].x < uOffsets0[#uOffsets0].x)
+                        and makeStairsEntry(config, coor.trans({x = xRef, y = yOffset, z = 0}))
+                        or makePlatformStairsEntry(config, coor.trans({x = xRef, y = yOffset, z = 0}))
+                        )
+                    local entryLeft = (xOffsets0[1].x < uOffsets0[1].x)
+                        and makePlatformStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
+                        or makeStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
+                    local entryTram = hasTramStop
+                        and makeStairsEntry(config, coor.trans({x = xMax - 0.5 * station.platformWidth, y = tramOffset, z = 0}))
+                        or {models = {}, streets = {}, faces = {}}
+                    
+                    return
+                        {
+                            models = func.flatten({entryRight.models, entryLeft.models, entryTram.models}),
+                            streets = func.flatten({entryRight.streets, entryLeft.streets, entryTram.streets}),
+                            faces = func.flatten({entryRight.faces, entryLeft.faces, entryTram.faces})
+                        }
+                else
+                    return {models = {}, streets = {}, faces = {}}
+                end
             end
         end,
         
@@ -690,7 +652,7 @@ local function makeUpdateFn(config, hasUGLevel, makers)
             local tram = hasTramStop and (
                 uOffsets0[#uOffsets0].x > xOffsets0[#xOffsets0].x and
                 makersFn.makeTramCommonPlatformTram(uOffsets0[#uOffsets0].x, config, tramType) or
-                makersFn.makeIndividualPlatformTram(xOffsets0[#xOffsets0].x, config, tramType)) or
+                makersFn.makeTramIndividualPlatformTram(xOffsets0[#xOffsets0].x, config, tramType)) or
                 {
                     platforms = {}, edges = {},
                     xMax = (uOffsets0[#uOffsets0].x > xOffsets0[#xOffsets0].x and uOffsets0[#uOffsets0].x or xOffsets0[#xOffsets0].x) + 2.5,
@@ -833,8 +795,8 @@ local complex = {
                 availability = config.availability,
                 order = config.order,
                 soundConfig = config.soundConfig,
-                params = paramsTram(),
-                updateFn = makeUpdateFn(config, false, makeTerminal)
+                params = paramsUG(),
+                updateFn = makeUpdateFn(config, true, makeTerminal)
             }
         end
     end
