@@ -5,6 +5,7 @@ local descEN = [[Complex surface station, with underground level and/or tram sto
 
 Features:
 * Station with a surface level with option of an underground level and/or tram stop
+* Pass-through or termianl layout
 * From 2 to 12 tracks for each level
 * From 40m to 480m platform lengths
 * Cross station options with crossing angle of 30°, 60° and 90°
@@ -13,12 +14,14 @@ Features:
 * Available since 1900
 
 To be implemented:
-* Better-looking tram track
 * Underground tram stop (there're some techinique bugs)
-* Terminal layout
+* Tram stop at another side
 
 ---------------
 Changelog:
+1.1
+- Added terminal station
+- Little improvement over tram tracks
 1.0
 Released version.
 - Added surface station with tram stop
@@ -40,6 +43,7 @@ local descFR = [[Gares complexes avec niveau souterrain ou/et l'arrêt de tram.
 
 Caractéristiques:
 * Gare en surface avec option de niveau souterrain et/ou l'arrêt de tram
+* Gare terminale ou passante
 * De 2 jusqu'à 12 voies pour chaques niveaux
 * De 40m jusqu'à 480m de longeur de platformes
 * Option d'angle de croisement de 30°, 45°, 60° et 90°
@@ -48,12 +52,14 @@ Caractéristiques:
 * Disponible depuis 1900
 
 À implementer:
-* Cosmétique pour la voie de tram
 * L'arrêt de tram souterrain
-* Gares terminaux
+* L'arrêt de tram à l'autre côté
 
 ---------------
 Changelog:
+1.1
+- Ajoute de gare terminal
+- Amélioration légère sur la voie de tram
 1.0
 Version formelle.
 - Ajout de gare en surface avec l'arrêt de tram
@@ -69,6 +75,7 @@ local descZH = [[带有地下站台和有轨电车站台选项的联合车站
 
 特点:
 * 带有地下站台和/或有轨电车站台的地面车站
+* 通过式或尽头式车站
 * 每层2至12个站台
 * 站台长度从40米到480米
 * 在30°, 45°, 60° 或 90°之间可选的交汇角
@@ -77,12 +84,13 @@ local descZH = [[带有地下站台和有轨电车站台选项的联合车站
 * 自1900年起可用
 
 尚未实现:
-* 更好看的有轨轨道
 * 地下有轨车站
-* 尽头站
 
 ---------------
 Changelog:
+1.1
+- 加入了尽头式车站
+- 改进了有轨轨道的贴图
 1.0
 正式版本
 - 加入了带有有轨电车站台的地面车站

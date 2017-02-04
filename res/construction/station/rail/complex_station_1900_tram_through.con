@@ -56,7 +56,7 @@ local config = {
     availability = {
         yearFrom = 1900
     },
-    order = 4022,
+    order = 3022,
     soundConfig = {
 		soundSet = { name = "station_passenger_old" }
     },

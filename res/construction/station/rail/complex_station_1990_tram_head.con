@@ -56,7 +56,7 @@ local config = {
     availability = {
         yearFrom = 1990
     },
-    order = 6021,
+    order = 6022,
     soundConfig = {
 		soundSet = { name = "station_passenger_new" }
     },
@@ -97,4 +97,4 @@ local config = {
     stairesPlatform = localPath.."platform_single_stairs_second.mdl"
 }
 
-data = station.makeComplexUGTerminal(config)
+data = station.makeComplexTramTerminal(config)

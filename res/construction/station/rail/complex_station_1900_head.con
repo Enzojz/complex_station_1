@@ -48,15 +48,15 @@ data = rawData
 
 local station = require "complexstation"
 
-local path = "station/train/passenger/1990/"
-local localPath = "station/complex/1990/"
-local ugPath = "station/train/passenger/multi_level_underground/1990/"
+local path = "station/train/passenger/1920/"
+local localPath = "station/complex/1900/"
+local ugPath = "station/train/passenger/multi_level_underground/1920/"
 
 local config = {
     availability = {
-        yearFrom = 1990
+        yearFrom = 1900
     },
-    order = 6021,
+    order = 4021,
     soundConfig = {
 		soundSet = { name = "station_passenger_new" }
     },
