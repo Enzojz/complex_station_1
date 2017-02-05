@@ -457,8 +457,8 @@ local function makeThrough(config, xOffsets, uOffsets, nSeg)
             return function()
                 if (strConn < 3) then
                     
-                    local yHouse = ({15, 25, 30})[#uOffsets0 > 4 and 4 or math.ceil(#uOffsets0 * 0.5 + 1)]
-                    local house = config.surface.house[#uOffsets0 > 4 and 4 or math.ceil(#uOffsets0 * 0.5 + 1)]
+                    local yHouse = ({15, 25, 30})[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5 + 1)]
+                    local house = config.surface.house[#uOffsets0 > 4 and 3 or math.ceil(#uOffsets0 * 0.5 + 1)]
                     
                     platforms.surface[math.ceil(nSeg * 0.5)].id = config.surface.platformFstRepeat
                     platforms.surface[math.ceil(nSeg * 0.5 + 1)].id = config.surface.platformFstRepeat
