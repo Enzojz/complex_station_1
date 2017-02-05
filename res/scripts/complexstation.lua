@@ -5,8 +5,6 @@ local coor = require "coor"
 local trackEdge = require "trackedge"
 local station = require "stationlib"
 
-local dump = require "datadumper"
-
 local platformSegments = {2, 4, 8, 12, 16, 20, 24}
 local angleList = {-60, -30, -45, 0, 30, 45, 60, 90}
 local nbTracksLevelList = {2, 3, 4, 5, 6, 7, 8, 10, 12}
