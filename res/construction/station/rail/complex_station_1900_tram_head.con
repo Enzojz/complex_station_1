@@ -79,8 +79,8 @@ local config = {
         house = {
             localPath.."main_building_size1.mdl",
             localPath.."main_building_size2.mdl",
+            localPath.."main_building_size2.mdl",
             localPath.."main_building_size4.mdl",
-            localPath.."main_building_size5.mdl",
         }
     },
     tram = {
