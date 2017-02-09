@@ -614,8 +614,8 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
                     and {models = {}, streets = {}, faces = {}}
                     or (
                     (xOffsets0[1].x < uOffsets0[1].x)
-                    and makePlatformStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
-                    or makeStairsEntry(config, coor.mul(coor.rotZ(math.pi), coor.transY(yOffset)), coor.rotZ(math.pi))
+                    and makePlatformStairsEntry(config, coor.rotZ(math.pi) * coor.transY(yOffset), coor.rotZ(math.pi))
+                    or makeStairsEntry(config, coor.rotZ(math.pi) * coor.transY(yOffset), coor.rotZ(math.pi))
                 )
                 local entryTram = (hasTramStop and strConn > 2)
                     and makeStairsEntry(config, coor.trans({x = xMax - 0.5 * station.platformWidth, y = tramOffset, z = 0}))
@@ -726,7 +726,7 @@ local function makeUpdateFn(config, hasUGLevel, makers)
                 hasUGLevel and {
                     mz = coor.transZ(height),
                     mr = coor.rotZ(rad),
-                    mdr = coor.mul(coor.transX(-preUOffsets1[1]), (params.mirrored == 0 and coor.I() or coor.flipX()), coor.rotZ(rad), coor.transX(offsetX), coor.transY(offsetY)),
+                    mdr = coor.transX(-preUOffsets1[1]) * (params.mirrored == 0 and coor.I() or coor.flipX()) * coor.rotZ(rad) * coor.transX(offsetX) * coor.transY(offsetY),
                     nbTracks = nbTracksUG,
                     baseX = 0,
                     ignoreFst = nbTracksUG % 4 == 0,
