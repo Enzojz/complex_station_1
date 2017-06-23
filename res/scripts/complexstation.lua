@@ -1,9 +1,12 @@
+local function load(module) return require("underground/" .. module) end
+
 local laneutil = require "laneutil"
 local paramsutil = require "paramsutil"
-local func = require "func"
-local coor = require "coor"
-local trackEdge = require "trackedge"
-local station = require "stationlib"
+local func = load "func"
+local pipe = load "pipe"
+local coor = load "coor"
+local trackEdge = load "trackedge"
+local station = load "stationlib"
 
 local platformSegments = {2, 4, 8, 12, 16, 20, 24}
 local angleList = {-60, -30, -45, 0, 30, 45, 60, 90}
@@ -22,7 +25,6 @@ local snapRule = function(e) return func.filter(func.seq(0, #e - 1), function(e)
 
 
 local function makeStreet(edges)
-    
     return
         {
             type = "STREET",
@@ -80,22 +82,8 @@ local function paramsUG()
             values = func.map(platformSegments, function(l) return tostring(l * station.segmentLength) end),
             defaultIndex = 2
         },
-        {
-            key = "trackTypeCatenary",
-            name = _("Track Type & Catenary"),
-            values = {_("Normal"), _("Elec.")},
-            yearFrom = 1910,
-            yearTo = 1925,
-            defaultIndex = 1
-        },
-        {
-            key = "trackTypeCatenary",
-            name = _("Track Type & Catenary"),
-            values = {_("Normal"), _("Elec."), _("Elec.Hi-Speed"), _("Hi-Speed")},
-            yearFrom = 1925,
-            yearTo = 0,
-            defaultIndex = 1
-        },
+        paramsutil.makeTrackTypeParam(),
+        paramsutil.makeTrackCatenaryParam(),
         {
             key = "strConnection",
             name = _("Street Connection"),
@@ -150,7 +138,7 @@ local function paramsTerminalTram()
         {
             key = "strConnection",
             name = _("Street Connection"),
-            values = {_("1"), _("2"), _("Tram"), _("2").."+".._("Tram")},
+            values = {_("1"), _("2"), _("Tram"), _("2") .. "+" .. _("Tram")},
             defaultIndex = 0
         },
         paramsutil.makeTramTrackParam1(),
@@ -176,26 +164,12 @@ local function paramsTerminalUG()
             values = func.map(platformSegments, function(l) return tostring(l * station.segmentLength) end),
             defaultIndex = 2
         },
-        {
-            key = "trackTypeCatenary",
-            name = _("Track Type & Catenary"),
-            values = {_("Normal"), _("Elec.")},
-            yearFrom = 1910,
-            yearTo = 1925,
-            defaultIndex = 1
-        },
-        {
-            key = "trackTypeCatenary",
-            name = _("Track Type & Catenary"),
-            values = {_("Normal"), _("Elec."), _("Elec.Hi-Speed"), _("Hi-Speed")},
-            yearFrom = 1925,
-            yearTo = 0,
-            defaultIndex = 1
-        },
+        paramsutil.makeTrackTypeParam(),
+        paramsutil.makeTrackCatenaryParam(),
         {
             key = "strConnection",
             name = _("Street Connection"),
-            values = {_("1"), _("2"), _("Tram"), _("2").."+".._("Tram")},
+            values = {_("1"), _("2"), _("Tram"), _("2") .. "+" .. _("Tram")},
             defaultIndex = 0
         },
         paramsutil.makeTramTrackParam1(),
@@ -337,20 +311,21 @@ local function makeIndividualPlatformTram(yOffset)
         local tramTracks = coor.applyEdges(coor.trans({x = base + 12.5, y = yOffset, z = 0}), coor.I())(tramTrackCoor)
         local tramTracksExt = coor.applyEdges(coor.trans({x = base + 12.5, y = yOffset, z = 0}), coor.I())(tramTrackExtCoor)
         
-        local tramPlatform = func.concat({
-            newModel(config.tram.platformStart, coor.transX(base + 5), coor.transY(-30 + yOffset)),
-            newModel(config.tram.platformRepeat, coor.transX(base + 5), coor.transY(-10 + yOffset)),
-            newModel(config.tram.platformDwlink2, coor.transX(base + 5), coor.transY(10 + yOffset)),
-            newModel(config.tram.platformEnd, coor.transX(base + 5), coor.transY(30 + yOffset)),
-            
-            newModel(config.tram.platformStart, coor.transX(base + 20), coor.transY(-30 + yOffset)),
-            newModel(config.tram.platformDwlink2, coor.rotZ(math.pi), coor.transX(base + 20), coor.transY(-10 + yOffset)),
-            newModel(config.tram.platformRepeat, coor.transX(base + 20), coor.transY(10 + yOffset)),
-            newModel(config.tram.platformEnd, coor.transX(base + 20), coor.transY(30 + yOffset)),
-        }, func.concat(
-            tramPlatformRoofPattern(config, base + 5, yOffset),
-            tramPlatformRoofPattern(config, base + 20, yOffset)
-        ))
+        local tramPlatform = pipe.new
+            + {
+                newModel(config.tram.platformStart, coor.transX(base + 5), coor.transY(-30 + yOffset)),
+                newModel(config.tram.platformRepeat, coor.transX(base + 5), coor.transY(-10 + yOffset)),
+                newModel(config.tram.platformDwlink2, coor.transX(base + 5), coor.transY(10 + yOffset)),
+                newModel(config.tram.platformEnd, coor.transX(base + 5), coor.transY(30 + yOffset)),
+                
+                newModel(config.tram.platformStart, coor.transX(base + 20), coor.transY(-30 + yOffset)),
+                newModel(config.tram.platformDwlink2, coor.rotZ(math.pi), coor.transX(base + 20), coor.transY(-10 + yOffset)),
+                newModel(config.tram.platformRepeat, coor.transX(base + 20), coor.transY(10 + yOffset)),
+                newModel(config.tram.platformEnd, coor.transX(base + 20), coor.transY(30 + yOffset)),
+            }
+            + tramPlatformRoofPattern(config, base + 5, yOffset)
+            + tramPlatformRoofPattern(config, base + 20, yOffset)
+        
         return {
             edges = {makeTram("z_tram_track.lua", tramType, {})(tramTracks), makeTram("new_small.lua", tramType, {1, 3})(tramTracksExt)},
             platforms = tramPlatform,
@@ -534,12 +509,14 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
     return {
         makeEntry = function(strConn, _)
             local yOffset = -nSeg * station.segmentLength * 0.5
-            local allOffsets = func.sort(func.flatten(
-                {
-                    func.map(xOffsets0, function(o) return func.with(o, {isTrack = true}) end),
-                    func.map(uOffsets0, function(o) return func.with(o, {isTrack = false}) end)
-                }
-            ), function(l, r) return l.x < r.x end)
+            local allOffsets =
+                (
+                pipe.from(xOffsets0)
+                * pipe.map(function(o) return func.with(o, {isTrack = true}) end)
+                + pipe.from(uOffsets0)
+                * pipe.map(function(o) return func.with(o, {isTrack = false}) end)
+                )
+                * pipe.sort(function(l, r) return l.x < r.x end)
             
             local xHouse = (#uOffsets0 * station.platformWidth + #xOffsets0 * station.trackWidth) * 0.5
             local house = config.surface.house[#allOffsets > 14 and 4 or math.floor(#allOffsets * 0.33 + 0.3)]
@@ -547,40 +524,37 @@ local function makeTerminal(config, xOffsets, uOffsets, nSeg)
             
             return function()
                 return {
-                    models =
-                    func.flatten(
-                        {
-                            {newModel(house, coor.transY(yOffset - 10), coor.transX(baseX))},
-                            (function()
-                                local function fn(i, res)
-                                    local next = function(...) return fn(i + 1, func.concat(res, {...})) end
-                                    local l = allOffsets[i - 1]
-                                    local c = allOffsets[i]
-                                    local r = allOffsets[i + 1]
-                                    if (c == nil) then
-                                        return res
-                                    elseif (l == nil and c.isTrack) then --First as track
-                                        return next(newModel(config.surface.platformHeadTrackEnd, coor.flipX(), coor.transY(yOffset), c.mpt))
-                                    elseif (c.isTrack and r == nil) then -- Last as track
-                                        return next(newModel(config.surface.platformHeadTrackEnd, coor.transY(yOffset), c.mpt))
-                                    elseif (l == nil and not c.isTrack) then -- First as platform
-                                        return next(newModel(config.surface.platformHeadPlatformEnd, coor.flipX(), coor.transY(yOffset), c.mpt))
-                                    elseif (not c.isTrack and r == nil) then -- Last as platform
-                                        return next(newModel(config.surface.platformHeadPlatformEnd, coor.transY(yOffset), c.mpt))
-                                    elseif (not c.isTrack) then -- Platforms
-                                        return next(newModel(config.surface.platformHead, coor.transY(yOffset), c.mpt))
-                                    elseif (c.isTrack and r.isTrack) then
-                                        return next(newModel(config.surface.platformHeadTrack, coor.transY(yOffset), c.mpt))
-                                    elseif (c.isTrack and not r.isTrack) then
-                                        return next()
-                                    else
-                                        return next()
-                                    end
-                                end
-                                return fn(1, {})
-                            end)()
-                        }
-                    ),
+                    models = pipe.new
+                    / newModel(house, coor.transY(yOffset - 10), coor.transX(baseX))
+                    + (function()
+                        local function fn(i, res)
+                            local next = function(...) return fn(i + 1, func.concat(res, {...})) end
+                            local l = allOffsets[i - 1]
+                            local c = allOffsets[i]
+                            local r = allOffsets[i + 1]
+                            if (c == nil) then
+                                return res
+                            elseif (l == nil and c.isTrack) then --First as track
+                                return next(newModel(config.surface.platformHeadTrackEnd, coor.flipX(), coor.transY(yOffset), c.mpt))
+                            elseif (c.isTrack and r == nil) then -- Last as track
+                                return next(newModel(config.surface.platformHeadTrackEnd, coor.transY(yOffset), c.mpt))
+                            elseif (l == nil and not c.isTrack) then -- First as platform
+                                return next(newModel(config.surface.platformHeadPlatformEnd, coor.flipX(), coor.transY(yOffset), c.mpt))
+                            elseif (not c.isTrack and r == nil) then -- Last as platform
+                                return next(newModel(config.surface.platformHeadPlatformEnd, coor.transY(yOffset), c.mpt))
+                            elseif (not c.isTrack) then -- Platforms
+                                return next(newModel(config.surface.platformHead, coor.transY(yOffset), c.mpt))
+                            elseif (c.isTrack and r.isTrack) then
+                                return next(newModel(config.surface.platformHeadTrack, coor.transY(yOffset), c.mpt))
+                            elseif (c.isTrack and not r.isTrack) then
+                                return next()
+                            else
+                                return next()
+                            end
+                        end
+                        return fn(1, {})
+                    end)()
+                    ,
                     streets = {
                         makeStreet({
                             {{baseX, yOffset - 20, 0}, {0, -1, 0}},
@@ -669,16 +643,9 @@ local function makeUpdateFn(config, hasUGLevel, makers)
         params.nbTracksSf = params.nbTracksSf or 0
         params.nbTracksUG = params.nbTracksUG or 0
         params.length = params.length or 2
-        if (hasUGLevel) then
-            params.trackTypeCatenary = params.trackTypeCatenary or 1
-            params.trackType = ({0, 0, 1, 1})[params.trackTypeCatenary + 1]
-            params.catenary = ({0, 1, 1, 0})[params.trackTypeCatenary + 1]
-            params.tramTrack = params.tramTrack or 0
-        else
-            params.trackType = params.trackType or 0
-            params.catenary = params.catenary or 1
-            params.tramTrack = (params.tramTrack and params.tramTrack > 0 and params.tramTrack) or 2
-        end
+        params.trackType = params.trackType or 0
+        params.catenary = params.catenary or 1
+        params.tramTrack = (params.tramTrack and params.tramTrack > 0 and params.tramTrack) or 2
         params.strConnection = params.strConnection or 0
         params.offsetLat = params.offsetLat or 0
         params.offsetMed = params.offsetMed or 4
@@ -759,29 +726,27 @@ local function makeUpdateFn(config, hasUGLevel, makers)
             local entry = makersFn.makeEntry(strConn, platforms)()
             local entry2 = makersFn.makeEntry2(strConn, hasTramStop, tram.xMax)()
             
-            result.models = func.flatten({
-                platforms.surface, platforms.underground, tram.platforms, platforms.roofs,
-                entry.models, entry2.models,
-            }
-            )
-            result.edgeLists = func.flatten(
-                {
-                    {
-                        trackEdge.normal(catenary, trackType, true, snapRule)(tracks.surface),
-                        trackEdge.tunnel(catenary, trackType, snapRule)(tracks.underground)
-                    },
-                    tram.edges,
-                    {
-                        trackEdge.tunnel(false, "zzz_mock.lua", station.noSnap)(tracks.mock),
-                    },
-                    entry.streets,
-                    entry2.streets
+            result.models = pipe.new
+                + platforms.surface
+                + platforms.underground
+                + tram.platforms
+                + platforms.roofs
+                + entry.models
+                + entry2.models
+            
+            result.edgeLists = pipe.new
+                + {
+                    trackEdge.normal(catenary, trackType, true, snapRule)(tracks.surface),
+                    trackEdge.tunnel(catenary, trackType, snapRule)(tracks.underground)
                 }
-            )
-            result.terminalGroups = func.flatten({
-                station.makeTerminals(xuIndex),
-                hasTramStop and tram.terminals(uOffsets, xOffsets, nSeg) or {}
-            })
+                + tram.edges
+                + {trackEdge.tunnel(false, "zzz_mock.lua", station.noSnap)(tracks.mock)}
+                + entry.streets
+                + entry2.streets
+            
+            result.terminalGroups = pipe.new
+                + station.makeTerminals(xuIndex)
+                + (hasTramStop and tram.terminals(uOffsets, xOffsets, nSeg) or {})
             
             local totalWidth = station.trackWidth * #ofGroup(xOffsets, 0) + station.platformWidth * #ofGroup(uOffsets, 0)
             local xMin = -0.5 * station.platformWidth
