@@ -645,7 +645,7 @@ local function makeUpdateFn(config, hasUGLevel, makers)
         params.length = params.length or 2
         params.trackType = params.trackType or 0
         params.catenary = params.catenary or 1
-        params.tramTrack = (params.tramTrack and params.tramTrack > 0 and params.tramTrack) or 2
+        params.tramTrack = hasUGLevel and (params.tramTrack or 0) or ((params.tramTrack and params.tramTrack > 0 and params.tramTrack) or 2)
         params.strConnection = params.strConnection or 0
         params.offsetLat = params.offsetLat or 0
         params.offsetMed = params.offsetMed or 4
